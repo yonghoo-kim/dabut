@@ -38,6 +38,7 @@ export function ThreadList({
   serverTodayKey,
   partnerName,
   isCurrentMonth,
+  focusMonthKey,
 }: {
   groups: ThreadGroup[];
   currentUserId: string;
@@ -45,6 +46,8 @@ export function ThreadList({
   partnerName?: string | null;
   /** Whether the selected month is the real current month — gates the synthetic "오늘 일정없음" placeholder. */
   isCurrentMonth: boolean;
+  /** 선택한 월 ("yyyy-MM"): 처음 스크롤 위치(오늘이 그 달이면 오늘, 아니면 그 달 첫 일정). */
+  focusMonthKey?: string;
 }) {
   const t = useTranslations("calendar");
   const tDates = useTranslations("dates");
@@ -60,7 +63,10 @@ export function ThreadList({
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       const root = rootRef.current;
-      const el = root?.querySelector("[data-today-group]") ?? root?.querySelector("[data-thread-group]");
+      const el =
+        root?.querySelector("[data-today-group][data-focus-month]") ??
+        root?.querySelector("[data-focus-month]") ??
+        root?.querySelector("[data-thread-group]");
       if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return () => cancelAnimationFrame(frame);
@@ -167,6 +173,7 @@ export function ThreadList({
             className="relative scroll-mt-14"
             data-thread-group=""
             {...(today ? { "data-today-group": "" } : {})}
+            {...(focusMonthKey && group.date.startsWith(focusMonthKey) ? { "data-focus-month": "" } : {})}
           >
             <h3 className="sticky top-0 z-10 -mx-1 mb-2 bg-bg/90 px-1 py-1.5 backdrop-blur">
               <span

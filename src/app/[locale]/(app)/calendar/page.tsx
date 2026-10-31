@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { addMonths, format, endOfMonth, isSameMonth } from "date-fns";
+import { addMonths, format, endOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { categorizeEvent } from "@/lib/calendar/categorize-event";
 import { expandEventsForDisplay } from "@/lib/calendar/expand-events-for-display";
@@ -81,8 +81,12 @@ export default async function CalendarPage({
   // kept whenever they overlap the month at all, so a multi-day event
   // starting just before month-end (or ending just after month-start) still
   // shows up once, in both months it touches.
-  const monthStartIso = zonedDateTimeToUtcIso(format(month, "yyyy-MM-dd"), "00:00:00", timeZone);
-  const monthEndIso = zonedDateTimeToUtcIso(format(endOfMonth(month), "yyyy-MM-dd"), "23:59:59", timeZone);
+  // 일정목록은 선택한 달의 앞뒤 한 달씩, 총 3개월을 보여준다 (처음 화면은 오늘 기준).
+  const threadWindowStart = addMonths(month, -1);
+  const threadWindowEnd = addMonths(month, 1);
+  const threadMonthKeys = [-1, 0, 1].map((offset) => format(addMonths(month, offset), "yyyy-MM"));
+  const monthStartIso = zonedDateTimeToUtcIso(format(threadWindowStart, "yyyy-MM-dd"), "00:00:00", timeZone);
+  const monthEndIso = zonedDateTimeToUtcIso(format(endOfMonth(threadWindowEnd), "yyyy-MM-dd"), "23:59:59", timeZone);
   const monthStartMs = new Date(monthStartIso).getTime();
   const monthEndMs = new Date(monthEndIso).getTime();
   const threadEvents = isThread
@@ -142,8 +146,9 @@ export default async function CalendarPage({
             serverTodayKey={toDateKey(new Date())}
             timeZone={timeZone}
             partnerName={partnerName}
-            isCurrentMonth={isSameMonth(month, new Date())}
+            isCurrentMonth={threadMonthKeys.includes(format(new Date(), "yyyy-MM"))}
             monthKey={format(month, "yyyy-MM")}
+            monthKeys={threadMonthKeys}
           />
         </MonthSlide>
       ) : (

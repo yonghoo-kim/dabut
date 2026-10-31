@@ -20,10 +20,10 @@ function timeLabel(entry: DayEntry<EventRow>, allDay: string, timeZone: string):
   return `${start}–${toZonedTimeInputValue(event.end_at, timeZone)}`;
 }
 
-function groupEntriesByDate(entries: DayEntry<CategorizedEvent>[], monthKey?: string) {
+function groupEntriesByDate(entries: DayEntry<CategorizedEvent>[], monthKeys?: string[]) {
   const byDate = new Map<string, DayEntry<CategorizedEvent>[]>();
   for (const entry of entries) {
-    if (monthKey && !entry.date.startsWith(monthKey)) continue;
+    if (monthKeys && !monthKeys.some((key) => entry.date.startsWith(key))) continue;
     const list = byDate.get(entry.date);
     if (list) list.push(entry);
     else byDate.set(entry.date, [entry]);
@@ -50,6 +50,7 @@ export function ThreadView({
   partnerName,
   isCurrentMonth,
   monthKey,
+  monthKeys,
 }: {
   events: CategorizedEvent[];
   currentUserId: string;
@@ -61,9 +62,11 @@ export function ThreadView({
   isCurrentMonth: boolean;
   /** Optional "yyyy-MM": drops day groups outside this month (events overlapping the month edges). */
   monthKey?: string;
+  /** 목록에 포함할 월들 ("yyyy-MM"). 없으면 monthKey 한 달만. */
+  monthKeys?: string[];
 }) {
   const t = useTranslations("calendar");
-  const groups: ThreadGroup[] = groupEntriesByDate(expandEventsByDay(events, timeZone), monthKey).map((group) => ({
+  const groups: ThreadGroup[] = groupEntriesByDate(expandEventsByDay(events, timeZone), monthKeys ?? (monthKey ? [monthKey] : undefined)).map((group) => ({
     date: group.date,
     events: group.entries.map((entry) => ({
       id: entry.event.id,
@@ -101,6 +104,7 @@ export function ThreadView({
       serverTodayKey={serverTodayKey}
       partnerName={partnerName}
       isCurrentMonth={isCurrentMonth}
+      focusMonthKey={monthKey}
     />
   );
 }
