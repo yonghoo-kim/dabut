@@ -1,7 +1,7 @@
 "use client";
 
 import { dragScrollRef } from "@/components/ui/drag-scroll";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, MapPin, Search, Users } from "lucide-react";
 import { dateGroupLabel } from "@/lib/dates/relative-day";
@@ -55,10 +55,15 @@ export function ThreadList({
   const [ownerFilter, setOwnerFilter] = useState<EventOwnerFilter | null>(null);
   const { isRemoved, remove } = useOptimisticRemoval(quickDeleteEvent, "eventDeleted");
 
-  // 일정 목록을 열면 오늘 날짜 그룹으로 스크롤.
+  const rootRef = useRef<HTMLDivElement>(null);
+  // 일정 목록을 열면(월을 바꿔도 새로 마운트됨) 오늘 그룹으로, 오늘이 없는 달이면 그 달의 첫 일정으로 스크롤.
   useEffect(() => {
-    const el = document.querySelector("[data-today-group]");
-    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const frame = requestAnimationFrame(() => {
+      const root = rootRef.current;
+      const el = root?.querySelector("[data-today-group]") ?? root?.querySelector("[data-thread-group]");
+      if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -105,7 +110,7 @@ export function ThreadList({
     }`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={rootRef} className="flex flex-col gap-4">
       <FilterDisclosure label={t("filtersLabel")} activeCount={activeFilterCount}>
         <div className="relative">
           <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
@@ -157,7 +162,12 @@ export function ThreadList({
       {visible.map((group) => {
         const today = group.date === todayKey;
         return (
-          <section key={group.date} className="relative scroll-mt-14" {...(today ? { "data-today-group": "" } : {})}>
+          <section
+            key={group.date}
+            className="relative scroll-mt-14"
+            data-thread-group=""
+            {...(today ? { "data-today-group": "" } : {})}
+          >
             <h3 className="sticky top-0 z-10 -mx-1 mb-2 bg-bg/90 px-1 py-1.5 backdrop-blur">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
