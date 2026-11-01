@@ -166,3 +166,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .celebrate-badge, .celebrate-icon, .celebrate-ring, .celebrate-msg, .celebrate-amt, .celebrate-spark, .celebrate-heart { animation-duration: 0.01ms !important; animation-delay: 0s !important; }
 }
+
+/* 달력 월 보기: AppShell 의 위/아래 여백(상단 안전영역, 탭바 6.5rem)을 뺀 높이에 페이지를 고정해
+   한 달이 스크롤 없이 한 화면에 보이게 한다. dvh 미지원 브라우저는 vh 로 대체. */
+.calendar-fit {
+  height: calc(100vh - max(env(safe-area-inset-top), 0.75rem) - env(safe-area-inset-bottom) - 6.5rem);
+  height: calc(100dvh - max(env(safe-area-inset-top), 0.75rem) - env(safe-area-inset-bottom) - 6.5rem);
+}

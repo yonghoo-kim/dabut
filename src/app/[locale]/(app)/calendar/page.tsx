@@ -6,9 +6,8 @@ import { expandEventsForDisplay } from "@/lib/calendar/expand-events-for-display
 import { redirect } from "@/i18n/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { ViewToggle } from "@/components/calendar/view-toggle";
-import { MonthView } from "@/components/calendar/month-view";
 import { MonthSlide } from "@/components/calendar/month-slide";
-import { MonthScroller, MonthSnapItem } from "@/components/calendar/month-scroller";
+import { CalendarMonths } from "@/components/calendar/calendar-months";
 import { MonthNavArrows } from "@/components/calendar/month-nav-arrows";
 import { ThreadView } from "@/components/calendar/thread-view";
 import { TodayButton } from "@/components/calendar/today-button";
@@ -102,7 +101,10 @@ export default async function CalendarPage({
   // The 6-week grid can spill into an adjacent year at a Dec/Jan boundary,
   // so every year actually present in the grid is covered, not just
   // `month`'s own year.
-  const windowMonths = [addMonths(month, -1), month, addMonths(month, 1)];
+  // 미리 그려 둘 달 범위: 선택한 달 기준 이전 3개월 ~ 이후 9개월 (화살표/스크롤은 서버 왕복 없이 이 안에서 이동).
+  const MONTHS_BEFORE = 3;
+  const MONTHS_AFTER = 9;
+  const windowMonths = Array.from({ length: MONTHS_BEFORE + MONTHS_AFTER + 1 }, (_, i) => addMonths(month, i - MONTHS_BEFORE));
   const gridYears = isThread
     ? []
     : Array.from(new Set(windowMonths.flatMap((m) => getMonthGridDays(m).map((d) => d.getFullYear()))));
@@ -113,14 +115,45 @@ export default async function CalendarPage({
     }, new Map<string, string>())
   );
 
-  return (
-    <main className="flex flex-col gap-3 pb-6">
-      {profile && !profile.telegram_chat_id && <TelegramOnboardingBanner />}
+  const realtime = (
+    <>
       <RealtimeRefresh table="events" />
       {/* A single-occurrence cancel/detach (이 일정만) only writes
           event_exceptions, not events — the other side needs this too to
           live-refresh when a recurring occurrence changes. */}
       <RealtimeRefresh table="event_exceptions" />
+    </>
+  );
+
+  if (!isThread) {
+    // 한 달이 화면에 딱 맞게 보이도록 페이지 높이를 뷰포트에 고정하고, 달력은 그 안에서 스크롤 스냅.
+    const dfLocale = getDateFnsLocale(locale);
+    return (
+      <main className="calendar-fit flex flex-col gap-3">
+        {profile && !profile.telegram_chat_id && <TelegramOnboardingBanner />}
+        {realtime}
+        <CalendarMonths
+          months={windowMonths.map((m) => ({
+            key: format(m, "yyyy-MM"),
+            title: format(m, monthTitlePattern(locale), { locale: dfLocale }),
+          }))}
+          initialIndex={MONTHS_BEFORE}
+          events={categorized}
+          currentUserId={user.id}
+          partnerName={partnerName}
+          timeZone={timeZone}
+          holidays={holidayEntries}
+          currentMonthKey={format(new Date(), "yyyy-MM")}
+          legend={<CategoryLegend partnerName={partnerName} />}
+        />
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex flex-col gap-3 pb-6">
+      {profile && !profile.telegram_chat_id && <TelegramOnboardingBanner />}
+      {realtime}
       <PageHeader
         title={
           <MonthNavArrows
@@ -128,48 +161,28 @@ export default async function CalendarPage({
             monthTitle={monthTitle}
             prevLabel={t("prevMonth")}
             nextLabel={t("nextMonth")}
-            extraQuery={isThread ? { view: "thread" } : undefined}
+            extraQuery={{ view: "thread" }}
           />
         }
         action={
           <div className="flex shrink-0 items-center gap-2">
-            <TodayButton month={month} extraQuery={isThread ? { view: "thread" } : undefined} />
+            <TodayButton month={month} extraQuery={{ view: "thread" }} />
             <ViewToggle />
           </div>
         }
       />
-      {isThread ? (
-        <MonthSlide monthKey={`thread-${format(month, "yyyy-MM")}`}>
-          <ThreadView
-            events={threadEvents}
-            currentUserId={user.id}
-            serverTodayKey={toDateKey(new Date())}
-            timeZone={timeZone}
-            partnerName={partnerName}
-            isCurrentMonth={threadMonthKeys.includes(format(new Date(), "yyyy-MM"))}
-            monthKey={format(month, "yyyy-MM")}
-            monthKeys={threadMonthKeys}
-          />
-        </MonthSlide>
-      ) : (
-        <>
-          <MonthScroller key={format(month, "yyyy-MM")} initialIndex={1}>
-            {windowMonths.map((m) => (
-              <MonthSnapItem key={format(m, "yyyy-MM")} title={format(m, monthTitlePattern(locale), { locale: getDateFnsLocale(locale) })}>
-                <MonthView
-                  month={m}
-                  events={categorized}
-                  currentUserId={user.id}
-                  partnerName={partnerName}
-                  timeZone={timeZone}
-                  holidays={holidayEntries}
-                />
-              </MonthSnapItem>
-            ))}
-          </MonthScroller>
-          <CategoryLegend partnerName={partnerName} />
-        </>
-      )}
+      <MonthSlide monthKey={`thread-${format(month, "yyyy-MM")}`}>
+        <ThreadView
+          events={threadEvents}
+          currentUserId={user.id}
+          serverTodayKey={toDateKey(new Date())}
+          timeZone={timeZone}
+          partnerName={partnerName}
+          isCurrentMonth={threadMonthKeys.includes(format(new Date(), "yyyy-MM"))}
+          monthKey={format(month, "yyyy-MM")}
+          monthKeys={threadMonthKeys}
+        />
+      </MonthSlide>
     </main>
   );
 }

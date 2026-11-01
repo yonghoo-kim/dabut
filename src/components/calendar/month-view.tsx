@@ -35,6 +35,7 @@ export function MonthView({
   partnerName,
   timeZone,
   holidays,
+  fill = false,
 }: {
   month: Date;
   events: CategorizedEvent[];
@@ -49,6 +50,8 @@ export function MonthView({
    * rule data must never end up in the client bundle.
    */
   holidays?: [string, string][];
+  /** 부모 높이에 맞춰 한 달이 한 화면에 다 보이도록 행 높이를 균등 분배한다 (3개월 스크롤러용). */
+  fill?: boolean;
 }) {
   const t = useTranslations("calendar");
   const tSummary = useTranslations("daySummary");
@@ -96,8 +99,8 @@ export function MonthView({
       timeZone={timeZone}
       holidays={holidayMap}
     >
-    <div>
-    <Card className="!p-2 sm:!p-3">
+    <div className={fill ? "h-full min-h-0" : undefined}>
+    <Card className={`!p-2 sm:!p-3 ${fill ? "flex h-full min-h-0 flex-col" : ""}`}>
       <div className="grid grid-cols-7 pb-1.5 text-center text-[11px] font-semibold">
         {weekdays.map((day) => (
           <div key={day.getDay()} className={weekdayColor(day.getDay())}>
@@ -105,12 +108,12 @@ export function MonthView({
           </div>
         ))}
       </div>
-      <div className="flex flex-col gap-px overflow-hidden rounded-xl bg-line">
+      <div className={`flex flex-col gap-px overflow-hidden rounded-xl bg-line ${fill ? "min-h-0 flex-1" : ""}`}>
         {weeks.map((weekDays, weekIndex) => {
           const laned = lanesByWeek[weekIndex];
           const laneCount = laned.reduce((max, { lane }) => Math.max(max, lane + 1), 0);
           return (
-            <div key={weekDays[0].toISOString()} className="flex flex-col gap-px">
+            <div key={weekDays[0].toISOString()} className={`flex flex-col gap-px ${fill ? "min-h-0 flex-1" : ""}`}>
               {laneCount > 0 && (
                 <div
                   className="grid grid-cols-7 gap-x-px gap-y-0.5 bg-surface px-0.5 pt-0.5"
@@ -133,7 +136,7 @@ export function MonthView({
                   ))}
                 </div>
               )}
-              <div className="grid grid-cols-7 gap-px bg-line">
+              <div className={`grid grid-cols-7 gap-px bg-line ${fill ? "min-h-0 flex-1" : ""}`}>
                 {weekDays.map((day, dayIndex) => {
                   const cornerClass = `${weekIndex === 0 && dayIndex === 0 && laneCount === 0 ? "rounded-tl-xl" : ""} ${weekIndex === 0 && dayIndex === 6 && laneCount === 0 ? "rounded-tr-xl" : ""} ${weekIndex === weeks.length - 1 && dayIndex === 0 ? "rounded-bl-xl" : ""} ${weekIndex === weeks.length - 1 && dayIndex === 6 ? "rounded-br-xl" : ""}`;
                   const touching = events.filter((event) => isDayWithinEvent(day, event, timeZone));
@@ -151,7 +154,7 @@ export function MonthView({
                         date: format(day, "PPP", { locale: dfLocale }),
                         count: touching.length,
                       })}
-                      className={`flex min-h-[6.5rem] min-w-0 flex-col gap-0.5 p-0.5 ${
+                      className={`flex min-w-0 flex-col gap-0.5 p-0.5 ${fill ? "min-h-0 overflow-hidden" : "min-h-[6.5rem]"} ${
                         inMonth ? "bg-surface" : "bg-surface-2/60 opacity-45"
                       } ${isToday ? "today-cell-indicator" : ""} ${cornerClass}`}
                     >
