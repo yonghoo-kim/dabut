@@ -76,7 +76,7 @@ export function CalendarMonths({
   const scrollToIndex = useCallback((index: number, smooth: boolean) => {
     const el = scrollerRef.current;
     if (!el || !itemWRef.current) return;
-    el.scrollTo({ left: index * itemWRef.current, behavior: smooth ? "smooth" : "auto" });
+    el.scrollTo({ left: index * itemWRef.current, behavior: smooth ? "smooth" : "instant" });
   }, []);
 
   // 스크롤러 너비 측정 + 초기 위치 (선택한 달이 보이게).
@@ -146,7 +146,12 @@ export function CalendarMonths({
 
   function goToday() {
     const index = months.findIndex((m) => m.key === currentMonthKey);
-    if (index >= 0) scrollToIndex(index, true);
+    if (index >= 0) {
+      // 멀리 떨어진 달에서 부드럽게 여러 장을 넘기면 스냅이 중간 달에 걸릴 수 있어 바로 이동한다.
+      scrollToIndex(index, Math.abs(index - activeRef.current) <= 1);
+      activeRef.current = index;
+      setActive(index);
+    }
     else router.push(monthHref(new Date()));
   }
 

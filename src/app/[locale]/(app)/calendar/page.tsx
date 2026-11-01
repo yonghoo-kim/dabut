@@ -133,6 +133,8 @@ export default async function CalendarPage({
         {profile && !profile.telegram_chat_id && <TelegramOnboardingBanner />}
         {realtime}
         <CalendarMonths
+          // 기준 월이 바뀌면(월 선택, 범위 밖 오늘 이동) 스크롤 위치/현재 월 상태를 새로 시작한다.
+          key={format(month, "yyyy-MM")}
           months={windowMonths.map((m) => ({
             key: format(m, "yyyy-MM"),
             title: format(m, monthTitlePattern(locale), { locale: dfLocale }),
