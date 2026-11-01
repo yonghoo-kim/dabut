@@ -5,7 +5,6 @@ import { categorizeEvent } from "@/lib/calendar/categorize-event";
 import { expandEventsForDisplay } from "@/lib/calendar/expand-events-for-display";
 import { redirect } from "@/i18n/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { ViewToggle } from "@/components/calendar/view-toggle";
 import { MonthSlide } from "@/components/calendar/month-slide";
 import { CalendarMonths } from "@/components/calendar/calendar-months";
 import { MonthNavArrows } from "@/components/calendar/month-nav-arrows";
@@ -169,7 +168,6 @@ export default async function CalendarPage({
         action={
           <div className="flex shrink-0 items-center gap-2">
             <TodayButton month={month} extraQuery={{ view: "thread" }} />
-            <ViewToggle />
           </div>
         }
       />

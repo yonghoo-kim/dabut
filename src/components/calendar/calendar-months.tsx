@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useProgressRouter } from "@/components/feedback/use-progress-router";
 import { MonthView } from "./month-view";
 import { MonthYearPicker } from "./month-year-picker";
-import { ViewToggle } from "./view-toggle";
 import { monthHref } from "./date-locale";
 import type { Database } from "@/types/database.types";
 
@@ -174,7 +173,6 @@ export function CalendarMonths({
               {tDates("today")}
             </button>
           )}
-          <ViewToggle />
         </div>
       </header>
 
