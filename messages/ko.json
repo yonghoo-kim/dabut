@@ -131,7 +131,20 @@
     "filterAll": "전체",
     "ownerFilterLabel": "일정 필터",
     "noEventsToday": "일정없음",
-    "addEvent": "일정 추가"
+    "addEvent": "일정 추가",
+    "holidayShort": {
+      "newYear": "신정",
+      "seollal": "설날",
+      "samil": "삼일절",
+      "children": "어린이날",
+      "buddha": "석탄일",
+      "memorial": "현충일",
+      "liberation": "광복절",
+      "chuseok": "추석",
+      "foundation": "개천절",
+      "hangul": "한글날",
+      "christmas": "성탄절"
+    }
   },
   "events": {
     "title": "제목",

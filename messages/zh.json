@@ -131,7 +131,20 @@
     "filterAll": "全部",
     "ownerFilterLabel": "日程筛选",
     "noEventsToday": "没有日程",
-    "addEvent": "添加日程"
+    "addEvent": "添加日程",
+    "holidayShort": {
+      "newYear": "元旦",
+      "seollal": "春节",
+      "samil": "三一节",
+      "children": "儿童节",
+      "buddha": "佛诞",
+      "memorial": "显忠日",
+      "liberation": "光复节",
+      "chuseok": "中秋",
+      "foundation": "开天节",
+      "hangul": "韩文日",
+      "christmas": "圣诞"
+    }
   },
   "events": {
     "title": "标题",

@@ -131,7 +131,20 @@
     "filterAll": "All",
     "ownerFilterLabel": "Event filter",
     "noEventsToday": "No events",
-    "addEvent": "Add event"
+    "addEvent": "Add event",
+    "holidayShort": {
+      "newYear": "New Year",
+      "seollal": "Seollal",
+      "samil": "Mar 1st",
+      "children": "Children",
+      "buddha": "Buddha",
+      "memorial": "Memorial",
+      "liberation": "Liberation",
+      "chuseok": "Chuseok",
+      "foundation": "Gaecheon",
+      "hangul": "Hangul",
+      "christmas": "Xmas"
+    }
   },
   "events": {
     "title": "Title",

@@ -2,6 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { Flag, Flower, Flower2, Gift, Moon, PartyPopper, PenLine, Sparkles, Sunrise, TreePine, type LucideIcon } from "lucide-react";
+import { holidayTheme, type HolidayThemeKey } from "@/lib/calendar/holiday-theme";
 import { format, isSameDay, isSameMonth } from "date-fns";
 import { getMonthGridDays } from "@/lib/calendar/month-grid";
 import { isDayWithinEvent, isMultiDayEvent } from "@/lib/calendar/day-summary";
@@ -11,6 +13,20 @@ import type { Database } from "@/types/database.types";
 import { CATEGORY_KEY, CHIP_CLASSNAME, DOT_CLASSNAME } from "./category-style";
 import { getDateFnsLocale } from "./date-locale";
 import { DayCellButton, DaySummaryProvider } from "./day-summary-sheet";
+
+const HOLIDAY_ICONS: Record<HolidayThemeKey, LucideIcon> = {
+  newYear: Sparkles,
+  seollal: Gift,
+  samil: Flag,
+  children: PartyPopper,
+  buddha: Flower,
+  memorial: Flower2,
+  liberation: Flag,
+  chuseok: Moon,
+  foundation: Sunrise,
+  hangul: PenLine,
+  christmas: TreePine,
+};
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type CategorizedEvent = EventRow & { category: "mine" | "partner" | "shared" };
@@ -144,6 +160,8 @@ export function MonthView({
                   const inMonth = isSameMonth(day, month);
                   const isToday = isSameDay(day, today);
                   const holidayName = holidayMap.get(dateKey(day));
+                  const theme = holidayTheme(dateKey(day), holidayName);
+                  const ThemeIcon = theme ? HOLIDAY_ICONS[theme.key] : null;
                   const visible = dayEvents.slice(0, MAX_CHIPS);
                   const hidden = dayEvents.length - visible.length;
                   return (
@@ -157,7 +175,16 @@ export function MonthView({
                       className={`flex min-w-0 flex-col gap-0.5 p-0.5 ${fill ? "min-h-0 overflow-hidden" : "min-h-[6.5rem]"} ${
                         inMonth ? "bg-surface" : "bg-surface-2/60 opacity-45"
                       } ${isToday ? "today-cell-indicator" : ""} ${cornerClass}`}
+                      style={theme ? { backgroundImage: theme.background } : undefined}
                     >
+                      {ThemeIcon && theme && (
+                        <ThemeIcon
+                          aria-hidden
+                          className="pointer-events-none absolute bottom-1 right-1 size-[42%] max-h-9 max-w-9 opacity-25"
+                          style={{ color: theme.accent }}
+                          strokeWidth={1.6}
+                        />
+                      )}
                       <span
                         aria-current={isToday ? "date" : undefined}
                         title={holidayName}
@@ -169,6 +196,14 @@ export function MonthView({
                       >
                         {isToday ? tDates("today") : day.getDate()}
                       </span>
+                      {theme && holidayName && (
+                        <span
+                          className="relative -mt-0.5 truncate text-center text-[9px] font-bold leading-tight"
+                          style={{ color: theme.accent }}
+                        >
+                          {t(`holidayShort.${theme.key}`)}
+                        </span>
+                      )}
                       <ul className="flex min-w-0 flex-col gap-0.5">
                         {visible.map((event) => (
                           <li key={event.id} className="min-w-0" title={t(CATEGORY_KEY[event.category])}>

@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -108,16 +109,18 @@ export function DayCellButton({
   dateKey,
   label,
   className,
+  style,
   children,
 }: {
   dateKey: string;
   label: string;
   className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }) {
   const open = useContext(DaySummaryContext);
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative ${className ?? ""}`} style={style}>
       {children}
       <button
         type="button"
