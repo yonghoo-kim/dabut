@@ -54,20 +54,27 @@ export function CalendarMonths({
   const [itemW, setItemW] = useState(0);
   const [active, setActiveState] = useState(initialIndex);
   const activeRef = useRef(initialIndex);
-  // 드래그 중 손가락 이동량(px). null 이면 드래그 중이 아님 → transition 으로 스냅.
-  const [dragDx, setDragDx] = useState<number | null>(null);
-  // 멀리 점프할 때는 애니메이션 없이 바로 이동.
-  const [instant, setInstant] = useState(true);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const itemWRef = useRef(0);
   const suppressClickRef = useRef(false);
+
+  // 스와이프 반응을 즉각적으로: 드래그 중에는 React 렌더 없이 DOM transform 만 직접 바꾼다
+  // (예전엔 손가락이 움직일 때마다 13개월 전체가 다시 렌더돼 반박자 늦었다).
+  const applyTransform = useCallback((index: number, dx: number, animate: boolean) => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = animate ? "transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1)" : "none";
+    track.style.transform = `translate3d(${-index * itemWRef.current + dx}px, 0, 0)`;
+  }, []);
 
   const setActive = useCallback(
     (index: number, animate = true) => {
       const clamped = Math.max(0, Math.min(months.length - 1, index));
-      setInstant(!animate);
       activeRef.current = clamped;
+      applyTransform(clamped, 0, animate);
       setActiveState(clamped);
     },
-    [months.length]
+    [months.length, applyTransform]
   );
 
   // 각 달에는 그 달 격자와 겹치는 일정만 넘겨 렌더 비용을 줄인다.
@@ -91,13 +98,17 @@ export function CalendarMonths({
     if (!el) return;
     const measure = () => {
       const w = el.clientWidth;
-      if (w > 0) setItemW((prev) => (prev === w ? prev : w));
+      if (w > 0 && w !== itemWRef.current) {
+        itemWRef.current = w;
+        setItemW(w);
+        applyTransform(activeRef.current, 0, false);
+      }
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [applyTransform]);
 
   // 직접 구현한 스와이프 페이저: 네이티브 스크롤 스냅은 iOS Safari 에서 관성으로 두세 달 넘어갔다가
   // 되돌아오는 문제가 있어, 한 번 스와이프 = 정확히 한 달로 제어한다.
@@ -105,7 +116,7 @@ export function CalendarMonths({
     // 달력 좌우 스와이프가 탭 전환 스와이프로 넘어가지 않게.
     event.stopPropagation();
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    const width = itemW || viewportRef.current?.clientWidth || 1;
+    const width = itemWRef.current || viewportRef.current?.clientWidth || 1;
     const startX = event.clientX;
     const startY = event.clientY;
     let axis: "x" | "y" | null = null;
@@ -116,7 +127,7 @@ export function CalendarMonths({
       const mx = e.clientX - startX;
       const my = e.clientY - startY;
       if (!axis) {
-        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        if (Math.abs(mx) < 5 && Math.abs(my) < 5) return;
         axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
         if (axis === "y") return cleanup();
         suppressClickRef.current = true;
@@ -126,7 +137,7 @@ export function CalendarMonths({
       dx = atEdge ? mx * 0.3 : mx;
       samples.push({ t: performance.now(), x: e.clientX });
       if (samples.length > 6) samples.shift();
-      setDragDx(dx);
+      applyTransform(activeRef.current, dx, false);
     };
     const up = () => {
       cleanup();
@@ -137,7 +148,6 @@ export function CalendarMonths({
       let delta = 0;
       if (dx < -width * 0.18 || velocity < -0.35) delta = 1;
       else if (dx > width * 0.18 || velocity > 0.35) delta = -1;
-      setDragDx(null);
       setActive(activeRef.current + delta, true);
       // 드래그 직후 발생하는 click 은 날짜 시트를 열지 않도록 한 틱 동안만 막는다.
       setTimeout(() => {
@@ -146,7 +156,7 @@ export function CalendarMonths({
     };
     const cancel = () => {
       cleanup();
-      setDragDx(null);
+      applyTransform(activeRef.current, 0, true);
       suppressClickRef.current = false;
     };
     function cleanup() {
@@ -182,6 +192,33 @@ export function CalendarMonths({
     if (index >= 0) setActive(index, Math.abs(index - activeRef.current) <= 1);
     else router.push(monthHref(new Date()));
   }
+
+  // 달 목록은 현재 달이 바뀌어도 다시 그리지 않는다 (헤더 제목만 갱신).
+  const monthNodes = useMemo(
+    () =>
+      months.map((m, i) => (
+          <section
+            key={m.key}
+            data-month={m.key}
+            aria-label={m.title}
+            className="flex h-full shrink-0 flex-col"
+            style={{ width: itemW || "100%" }}
+          >
+            <div className="min-h-0 flex-1 pb-1">
+              <MonthView
+                fill
+                month={parseKey(m.key)}
+                events={eventsByMonth[i]}
+                currentUserId={currentUserId}
+                partnerName={partnerName}
+                timeZone={timeZone}
+                holidays={holidays}
+              />
+            </div>
+          </section>
+      )),
+    [months, itemW, eventsByMonth, currentUserId, partnerName, timeZone, holidays]
+  );
 
   const activeMonth = months[active] ?? months[initialIndex];
   const activeDate = parseKey(activeMonth.key);
@@ -220,35 +257,8 @@ export function CalendarMonths({
         }}
         onDragStart={(event) => event.preventDefault()}
       >
-        <div
-          className="flex h-full will-change-transform"
-          style={{
-            transform: `translate3d(${-active * itemW + (dragDx ?? 0)}px, 0, 0)`,
-            transition: dragDx !== null || instant ? "none" : "transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-          }}
-        >
-        {months.map((m, i) => (
-          <section
-            key={m.key}
-            data-month={m.key}
-            aria-label={m.title}
-            aria-hidden={i !== active}
-            className="flex h-full shrink-0 flex-col"
-            style={{ width: itemW || "100%" }}
-          >
-            <div className="min-h-0 flex-1 pb-1">
-              <MonthView
-                fill
-                month={parseKey(m.key)}
-                events={eventsByMonth[i]}
-                currentUserId={currentUserId}
-                partnerName={partnerName}
-                timeZone={timeZone}
-                holidays={holidays}
-              />
-            </div>
-          </section>
-        ))}
+        <div ref={trackRef} className="flex h-full will-change-transform">
+          {monthNodes}
         </div>
       </div>
       {legend}
