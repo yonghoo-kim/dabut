@@ -21,10 +21,9 @@ function parseKey(key: string): Date {
 }
 
 /**
- * 여러 달(예: 이전 3 + 이후 9)을 처음에 한꺼번에 그려 두고 좌우 스크롤 스냅으로 넘겨 본다.
- * 좌우 스와이프와 오늘 버튼은 서버 왕복 없이 스크롤만 하므로 즉시 반응한다. 각 달 높이는 스크롤러 높이와
- * 같게 맞추고(높이는 화면에 딱 맞게), 현재 보이는 달은 scroll 이벤트로 계산해 헤더 제목에 반영한다
- * (IntersectionObserver 대신 scrollLeft/너비 계산 → iOS Safari 에서도 안정적).
+ * 여러 달(예: 이전 3 + 이후 9)을 처음에 한꺼번에 그려 두고 좌우 스와이프로 한 달씩 넘겨 본다.
+ * 네이티브 스크롤 대신 transform 기반 페이저라 한 번 스와이프 = 정확히 한 달이고(iOS 관성 튐 없음),
+ * 스와이프/오늘 버튼/휠 모두 서버 왕복 없이 즉시 반응한다. 각 달은 화면 높이에 딱 맞게 채운다.
  */
 export function CalendarMonths({
   months,
@@ -51,11 +50,25 @@ export function CalendarMonths({
   const tDates = useTranslations("dates");
   const locale = useLocale();
   const router = useProgressRouter();
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [itemW, setItemW] = useState(0);
-  const [active, setActive] = useState(initialIndex);
+  const [active, setActiveState] = useState(initialIndex);
   const activeRef = useRef(initialIndex);
-  const itemWRef = useRef(0);
+  // 드래그 중 손가락 이동량(px). null 이면 드래그 중이 아님 → transition 으로 스냅.
+  const [dragDx, setDragDx] = useState<number | null>(null);
+  // 멀리 점프할 때는 애니메이션 없이 바로 이동.
+  const [instant, setInstant] = useState(true);
+  const suppressClickRef = useRef(false);
+
+  const setActive = useCallback(
+    (index: number, animate = true) => {
+      const clamped = Math.max(0, Math.min(months.length - 1, index));
+      setInstant(!animate);
+      activeRef.current = clamped;
+      setActiveState(clamped);
+    },
+    [months.length]
+  );
 
   // 각 달에는 그 달 격자와 겹치는 일정만 넘겨 렌더 비용을 줄인다.
   const eventsByMonth = useMemo(() => {
@@ -72,28 +85,13 @@ export function CalendarMonths({
     });
   }, [events, months]);
 
-  const scrollToIndex = useCallback((index: number, smooth: boolean) => {
-    const el = scrollerRef.current;
-    if (!el || !itemWRef.current) return;
-    el.scrollTo({ left: index * itemWRef.current, behavior: smooth ? "smooth" : "instant" });
-  }, []);
-
-  // 스크롤러 너비 측정 + 초기 위치 (선택한 달이 보이게).
+  // 뷰포트 너비 측정 (회전/창 크기 변경 대응).
   useLayoutEffect(() => {
-    const el = scrollerRef.current;
+    const el = viewportRef.current;
     if (!el) return;
     const measure = () => {
       const w = el.clientWidth;
-      if (w > 0 && w !== itemWRef.current) {
-        itemWRef.current = w;
-        setItemW(w);
-        // 너비가 바뀌면(회전, 창 크기) 보고 있던 달을 다시 맞춘다.
-        requestAnimationFrame(() => {
-          el.style.scrollBehavior = "auto";
-          el.scrollLeft = activeRef.current * w;
-          el.style.scrollBehavior = "";
-        });
-      }
+      if (w > 0) setItemW((prev) => (prev === w ? prev : w));
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -101,56 +99,87 @@ export function CalendarMonths({
     return () => observer.disconnect();
   }, []);
 
-  // 스크롤 위치 -> 현재 월 (rAF 로 묶음).
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    let frame = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const w = itemWRef.current;
-        if (!w) return;
-        const index = Math.max(0, Math.min(months.length - 1, Math.round(el.scrollLeft / w)));
-        if (index !== activeRef.current) {
-          activeRef.current = index;
-          setActive(index);
-        }
-      });
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(frame);
-    };
-  }, [months.length]);
+  // 직접 구현한 스와이프 페이저: 네이티브 스크롤 스냅은 iOS Safari 에서 관성으로 두세 달 넘어갔다가
+  // 되돌아오는 문제가 있어, 한 번 스와이프 = 정확히 한 달로 제어한다.
+  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    // 달력 좌우 스와이프가 탭 전환 스와이프로 넘어가지 않게.
+    event.stopPropagation();
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const width = itemW || viewportRef.current?.clientWidth || 1;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    let axis: "x" | "y" | null = null;
+    let dx = 0;
+    const samples: { t: number; x: number }[] = [{ t: performance.now(), x: startX }];
 
-  // PC 마우스 휠(세로)은 한 번에 한 달씩 좌우로 넘긴다. 트랙패드 가로 스와이프는 그대로 둔다.
+    const move = (e: PointerEvent) => {
+      const mx = e.clientX - startX;
+      const my = e.clientY - startY;
+      if (!axis) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+        if (axis === "y") return cleanup();
+        suppressClickRef.current = true;
+      }
+      if (e.cancelable) e.preventDefault();
+      const atEdge = (activeRef.current === 0 && mx > 0) || (activeRef.current === months.length - 1 && mx < 0);
+      dx = atEdge ? mx * 0.3 : mx;
+      samples.push({ t: performance.now(), x: e.clientX });
+      if (samples.length > 6) samples.shift();
+      setDragDx(dx);
+    };
+    const up = () => {
+      cleanup();
+      if (axis !== "x") return;
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      const velocity = (last.x - first.x) / Math.max(1, last.t - first.t); // px/ms
+      let delta = 0;
+      if (dx < -width * 0.18 || velocity < -0.35) delta = 1;
+      else if (dx > width * 0.18 || velocity > 0.35) delta = -1;
+      setDragDx(null);
+      setActive(activeRef.current + delta, true);
+      // 드래그 직후 발생하는 click 은 날짜 시트를 열지 않도록 한 틱 동안만 막는다.
+      setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
+    };
+    const cancel = () => {
+      cleanup();
+      setDragDx(null);
+      suppressClickRef.current = false;
+    };
+    function cleanup() {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+    }
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+  }
+
+  // PC 마우스 휠/트랙패드: 한 번에 한 달씩.
   useEffect(() => {
-    const el = scrollerRef.current;
+    const el = viewportRef.current;
     if (!el) return;
     let lockedUntil = 0;
     const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+      if (Math.abs(delta) < 4) return;
       event.preventDefault();
       const now = Date.now();
       if (now < lockedUntil) return;
       lockedUntil = now + 450;
-      const target = Math.max(0, Math.min(months.length - 1, activeRef.current + (event.deltaY > 0 ? 1 : -1)));
-      scrollToIndex(target, true);
+      setActive(activeRef.current + (delta > 0 ? 1 : -1), true);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [months.length, scrollToIndex]);
+  }, [setActive]);
 
   function goToday() {
     const index = months.findIndex((m) => m.key === currentMonthKey);
-    if (index >= 0) {
-      // 멀리 떨어진 달에서 부드럽게 여러 장을 넘기면 스냅이 중간 달에 걸릴 수 있어 바로 이동한다.
-      scrollToIndex(index, Math.abs(index - activeRef.current) <= 1);
-      activeRef.current = index;
-      setActive(index);
-    }
+    if (index >= 0) setActive(index, Math.abs(index - activeRef.current) <= 1);
     else router.push(monthHref(new Date()));
   }
 
@@ -177,18 +206,31 @@ export function CalendarMonths({
       </header>
 
       <div
-        ref={scrollerRef}
-        className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        // 달력 좌우 스와이프가 탭 전환 스와이프로 넘어가지 않게.
-        onPointerDownCapture={(event) => event.stopPropagation()}
-        style={{ scrollBehavior: "smooth" }}
+        ref={viewportRef}
+        className="relative min-h-0 flex-1 touch-pan-y select-none overflow-hidden"
+        onPointerDownCapture={onPointerDown}
+        onClickCapture={(event) => {
+          if (suppressClickRef.current) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+        onDragStart={(event) => event.preventDefault()}
       >
+        <div
+          className="flex h-full will-change-transform"
+          style={{
+            transform: `translate3d(${-active * itemW + (dragDx ?? 0)}px, 0, 0)`,
+            transition: dragDx !== null || instant ? "none" : "transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+          }}
+        >
         {months.map((m, i) => (
           <section
             key={m.key}
             data-month={m.key}
             aria-label={m.title}
-            className="flex h-full shrink-0 snap-start snap-always flex-col"
+            aria-hidden={i !== active}
+            className="flex h-full shrink-0 flex-col"
             style={{ width: itemW || "100%" }}
           >
             <div className="min-h-0 flex-1 pb-1">
@@ -204,6 +246,7 @@ export function CalendarMonths({
             </div>
           </section>
         ))}
+        </div>
       </div>
       {legend}
     </div>
