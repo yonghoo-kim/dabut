@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { Flag, Flower, Flower2, Gavel, Gift, Moon, PartyPopper, PenLine, Sparkles, Sunrise, TreePine, type LucideIcon } from "lucide-react";
+import { Flag, Flower, Flower2, Gavel, Gift, HardHat, Moon, PartyPopper, PenLine, Sparkles, Sunrise, TreePine, type LucideIcon } from "lucide-react";
 import { HOLIDAY_DECOR } from "./holiday-decor";
 import { holidayTheme, type HolidayThemeKey } from "@/lib/calendar/holiday-theme";
 import { format, isSameDay, isSameMonth } from "date-fns";
@@ -28,6 +28,7 @@ const HOLIDAY_ICONS: Record<HolidayThemeKey, LucideIcon> = {
   hangul: PenLine,
   christmas: TreePine,
   constitution: Gavel,
+  labor: HardHat,
 };
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];

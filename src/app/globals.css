@@ -296,3 +296,38 @@ body {
   53%, 100% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .hd-gavel, .hd-impact { animation: none !important; } }
+/* 설날 윷놀이: 윷가락이 던져져 빙글 돌다 떨어짐, 사람들은 환호 */
+.hd-yut { transform-box: fill-box; transform-origin: center; animation: hd-yut 1.8s cubic-bezier(0.3, 0, 0.6, 1) infinite; }
+@keyframes hd-yut {
+  0%, 15% { transform: translateY(0) rotate(0deg); }
+  45% { transform: translateY(-16px) rotate(200deg); }
+  75% { transform: translateY(0) rotate(360deg); }
+  82% { transform: translateY(-1.5px) rotate(360deg); }
+  88%, 100% { transform: translateY(0) rotate(360deg); }
+}
+.hd-cheer { animation: hd-hop 0.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .hd-yut, .hd-cheer { animation: none !important; } }
+/* 삼일절: 태극기 흔드는 팔, 만세 외침 */
+.hd-wave-arm { transform-box: view-box; transform-origin: 19px 24px; animation: hd-wave-arm 1.2s ease-in-out infinite; }
+@keyframes hd-wave-arm { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(14deg); } }
+.hd-manse { transform-box: fill-box; transform-origin: center; animation: hd-manse 1.2s ease-in-out infinite; }
+@keyframes hd-manse { 0%, 100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.12); opacity: 1; } }
+.hd-shout { transform-box: fill-box; transform-origin: center; animation: hd-shout 1.2s ease-in-out infinite; }
+@keyframes hd-shout { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.3); } }
+@media (prefers-reduced-motion: reduce) { .hd-wave-arm, .hd-manse, .hd-shout { animation: none !important; } }
+/* 광복절: 만세 환호하는 사람들, 끊어진 사슬 */
+.hd-hop-cheer { animation: hd-hop 0.8s ease-in-out infinite; }
+.hd-arms { transform-box: fill-box; transform-origin: center bottom; animation: hd-arms 0.8s ease-in-out infinite; }
+@keyframes hd-arms { 0%, 100% { transform: scaleY(0.85); } 50% { transform: scaleY(1.12); } }
+.hd-chain-bit { animation: hd-chain 1.6s ease-out infinite; }
+@keyframes hd-chain { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(1.5px) translateY(-0.6px); } }
+@media (prefers-reduced-motion: reduce) { .hd-hop-cheer, .hd-arms, .hd-chain-bit { animation: none !important; } }
+.hd-bow { transform-box: fill-box; transform-origin: center bottom; animation: hd-bow 2.4s ease-in-out infinite; }
+@keyframes hd-bow { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) { .hd-bow { animation: none !important; } }
+/* 노동절: 해먹 흔들, Zz */
+.hd-hammock { transform-box: view-box; transform-origin: 24px 18px; animation: hd-hammock 2.8s ease-in-out infinite; }
+@keyframes hd-hammock { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.hd-zz { opacity: 0; animation: hd-zz 1.8s ease-out infinite; }
+@keyframes hd-zz { 0% { opacity: 0; transform: translateY(2px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .hd-hammock, .hd-zz { animation: none !important; } .hd-zz { opacity: 1; } }

@@ -53,6 +53,11 @@ function getInstance(country: string, locale: string): Holidays {
  * built-in rules (including lunar-calendar holidays like 설날/추석) — no DB
  * row or network call, so there's nothing to keep in sync across years.
  */
+/** date-holidays 데이터에 없지만 한국에서 쉬는 날(빨간날)로 표시할 날. */
+const EXTRA_HOLIDAYS: Record<string, { monthDay: string; names: Record<string, string> }[]> = {
+  KR: [{ monthDay: "05-01", names: { ko: "노동절", en: "Labor Day", zh: "劳动节" } }],
+};
+
 export function getHolidaysForYear(year: number, timeZone: string, locale: string): Map<string, string> {
   const country = TIMEZONE_COUNTRY[timeZone];
   if (!country) return new Map();
@@ -68,6 +73,10 @@ export function getHolidaysForYear(year: number, timeZone: string, locale: strin
     for (let key = startKey; key <= endKey; key = nextDateKey(key)) {
       if (!map.has(key)) map.set(key, holiday.name);
     }
+  }
+  for (const extra of EXTRA_HOLIDAYS[country] ?? []) {
+    const key = `${year}-${extra.monthDay}`;
+    if (!map.has(key)) map.set(key, extra.names[holidayLanguage(locale)] ?? extra.names.en);
   }
   return map;
 }

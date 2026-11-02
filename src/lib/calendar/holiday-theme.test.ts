@@ -5,6 +5,7 @@ describe("holidayTheme", () => {
   it("themes fixed-date holidays by date", () => {
     expect(holidayTheme("2026-08-15", "광복절")?.key).toBe("liberation");
     expect(holidayTheme("2026-12-25", "기독탄신일")?.key).toBe("christmas");
+    expect(holidayTheme("2026-05-01", "노동절")?.key).toBe("labor");
   });
   it("themes lunar holidays by name in any locale", () => {
     expect(holidayTheme("2026-09-25", "추석")?.key).toBe("chuseok");

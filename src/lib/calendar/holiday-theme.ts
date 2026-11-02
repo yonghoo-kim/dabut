@@ -10,7 +10,8 @@ export type HolidayThemeKey =
   | "foundation"
   | "hangul"
   | "christmas"
-  | "constitution";
+  | "constitution"
+  | "labor";
 
 export type HolidayTheme = {
   key: HolidayThemeKey;
@@ -31,6 +32,7 @@ const THEMES: Record<HolidayThemeKey, Omit<HolidayTheme, "key">> = {
   chuseok: { background: "linear-gradient(160deg, rgba(255,214,102,0.36), rgba(255,160,90,0.28))", accent: "#e08a00" },
   foundation: { background: "linear-gradient(160deg, rgba(120,190,255,0.28), rgba(255,214,140,0.30))", accent: "#2f8fd8" },
   hangul: { background: "linear-gradient(160deg, rgba(120,200,150,0.28), rgba(255,236,170,0.28))", accent: "#2f9a5c" },
+  labor: { background: "linear-gradient(160deg, rgba(255,170,60,0.30), rgba(80,200,190,0.24))", accent: "#e07b00" },
   constitution: { background: "linear-gradient(160deg, rgba(190,140,90,0.28), rgba(90,120,190,0.20))", accent: "#8a5a32" },
   christmas: { background: "linear-gradient(160deg, rgba(90,190,120,0.28), rgba(255,110,110,0.26))", accent: "#2e9a55" },
 };
@@ -38,6 +40,7 @@ const THEMES: Record<HolidayThemeKey, Omit<HolidayTheme, "key">> = {
 const FIXED_DATES: Record<string, HolidayThemeKey> = {
   "01-01": "newYear",
   "03-01": "samil",
+  "05-01": "labor",
   "05-05": "children",
   "06-06": "memorial",
   "07-17": "constitution",
