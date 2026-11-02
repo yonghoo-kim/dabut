@@ -193,15 +193,18 @@ export function CalendarMonths({
           <MonthYearPicker month={activeDate} monthTitle={activeMonth.title} locale={locale} />
         </h1>
         <div className="flex shrink-0 items-center gap-2">
-          {activeMonth.key !== currentMonthKey && (
-            <button
-              type="button"
-              onClick={goToday}
-              className="shrink-0 rounded-full border border-line bg-surface-2 px-3 py-2 text-sm font-semibold text-brand transition hover:bg-brand-soft active:scale-95"
-            >
-              {tDates("today")}
-            </button>
-          )}
+          {/* 이번 달에서도 자리를 차지하게 두고 숨기기만 해서, 넘길 때 헤더 높이가 바뀌어 달력이 밀리지 않게 한다. */}
+          <button
+            type="button"
+            onClick={goToday}
+            tabIndex={activeMonth.key === currentMonthKey ? -1 : 0}
+            aria-hidden={activeMonth.key === currentMonthKey}
+            className={`shrink-0 rounded-full border border-line bg-surface-2 px-3 py-2 text-sm font-semibold text-brand transition hover:bg-brand-soft active:scale-95 ${
+              activeMonth.key === currentMonthKey ? "invisible" : ""
+            }`}
+          >
+            {tDates("today")}
+          </button>
         </div>
       </header>
 
