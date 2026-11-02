@@ -213,3 +213,86 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .xmas-snow, .xmas-light, .xmas-star { animation: none; }
 }
+
+/* 국경일/명절 칸 장면 (holiday-decor.tsx) */
+.hd-steam { animation: hd-steam 2.4s ease-in-out infinite; opacity: 0; }
+@keyframes hd-steam {
+  0% { transform: translateY(4px); opacity: 0; }
+  30% { opacity: 0.85; }
+  100% { transform: translateY(-5px); opacity: 0; }
+}
+.hd-flag { transform-box: fill-box; transform-origin: left center; animation: hd-flag 1.6s ease-in-out infinite; }
+.hd-flag-slow { animation-duration: 3s; }
+@keyframes hd-flag {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  25% { transform: skewY(-4deg) scaleX(0.96); }
+  50% { transform: skewY(2deg) scaleX(1); }
+  75% { transform: skewY(4deg) scaleX(0.95); }
+}
+.hd-kid { animation: hd-hop 0.7s ease-in-out infinite; }
+@keyframes hd-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.hd-leg-a, .hd-leg-b { transform-box: fill-box; transform-origin: top center; animation: hd-leg 0.35s ease-in-out infinite alternate; }
+.hd-leg-b { animation-direction: alternate-reverse; }
+@keyframes hd-leg { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }
+.hd-ball { animation: hd-ball 1.4s ease-in-out infinite; }
+@keyframes hd-ball {
+  0%, 100% { transform: translate(-6px, 0); }
+  25% { transform: translate(-3px, -9px); }
+  50% { transform: translate(6px, 0); }
+  75% { transform: translate(3px, -9px); }
+}
+.hd-sun { transform-box: fill-box; transform-origin: center; animation: hd-pulse 3s ease-in-out infinite; }
+@keyframes hd-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.hd-lotus { animation: hd-bob 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes hd-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(1.6px) rotate(2deg); } }
+.hd-wave { animation: hd-wave 3s linear infinite; }
+.hd-wave-2 { animation-duration: 4.4s; animation-direction: reverse; }
+@keyframes hd-wave { from { transform: translateX(0); } to { transform: translateX(-16px); } }
+.hd-moon-glow { transform-box: fill-box; transform-origin: center; animation: hd-glow 3s ease-in-out infinite; }
+@keyframes hd-glow { 0%, 100% { transform: scale(0.9); opacity: 0.25; } 50% { transform: scale(1.15); opacity: 0.55; } }
+.hd-twinkle { animation: hd-twinkle 1.8s ease-in-out infinite; }
+@keyframes hd-twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.hd-pray { transform-box: fill-box; transform-origin: center bottom; animation: hd-pray 2.6s ease-in-out infinite; }
+@keyframes hd-pray { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-4deg); } }
+.hd-sunrise { animation: hd-rise 5s ease-in-out infinite; }
+@keyframes hd-rise { 0% { transform: translateY(9px); } 45%, 80% { transform: translateY(0); } 100% { transform: translateY(9px); } }
+.hd-rays { transform-box: fill-box; transform-origin: center; animation: hd-spin 12s linear infinite; }
+@keyframes hd-spin { to { transform: rotate(360deg); } }
+.hd-cloud-l { animation: hd-cloud-l 5s ease-in-out infinite; }
+.hd-cloud-r { animation: hd-cloud-r 5s ease-in-out infinite; }
+@keyframes hd-cloud-l { 0%, 100% { transform: translateX(6px); } 50% { transform: translateX(-3px); } }
+@keyframes hd-cloud-r { 0%, 100% { transform: translateX(-6px); } 50% { transform: translateX(3px); } }
+.hd-char { opacity: 0; animation: hd-char 4.5s ease-out infinite; }
+@keyframes hd-char {
+  0% { opacity: 0; transform: translateY(1.5px); }
+  8%, 80% { opacity: 1; transform: translateY(0); }
+  95%, 100% { opacity: 0; }
+}
+.hd-king { transform-box: fill-box; transform-origin: center bottom; animation: hd-nod 2.25s ease-in-out infinite; }
+@keyframes hd-nod { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) {
+  [class*="hd-"] { animation: none !important; }
+  .hd-steam, .hd-char { opacity: 1; }
+}
+/* 제헌절 의사봉: 땅·땅·땅 후 잠깐 쉼 */
+.hd-gavel { transform-box: view-box; transform-origin: 38px 11.5px; animation: hd-gavel 2.4s ease-in infinite; }
+@keyframes hd-gavel {
+  0% { transform: rotate(28deg); }
+  10% { transform: rotate(0deg); }
+  18% { transform: rotate(22deg); }
+  28% { transform: rotate(0deg); }
+  36% { transform: rotate(22deg); }
+  46% { transform: rotate(0deg); }
+  70%, 100% { transform: rotate(28deg); }
+}
+.hd-impact { opacity: 0; animation: hd-impact 2.4s linear infinite; }
+@keyframes hd-impact {
+  0%, 9% { opacity: 0; }
+  10%, 14% { opacity: 1; }
+  15%, 27% { opacity: 0; }
+  28%, 32% { opacity: 1; }
+  33%, 45% { opacity: 0; }
+  46%, 52% { opacity: 1; }
+  53%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .hd-gavel, .hd-impact { animation: none !important; } }

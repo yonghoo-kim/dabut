@@ -2,8 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { Flag, Flower, Flower2, Gift, Moon, PartyPopper, PenLine, Sparkles, Sunrise, TreePine, type LucideIcon } from "lucide-react";
-import { ChristmasDecor } from "./christmas-decor";
+import { Flag, Flower, Flower2, Gavel, Gift, Moon, PartyPopper, PenLine, Sparkles, Sunrise, TreePine, type LucideIcon } from "lucide-react";
+import { HOLIDAY_DECOR } from "./holiday-decor";
 import { holidayTheme, type HolidayThemeKey } from "@/lib/calendar/holiday-theme";
 import { format, isSameDay, isSameMonth } from "date-fns";
 import { getMonthGridDays } from "@/lib/calendar/month-grid";
@@ -27,6 +27,7 @@ const HOLIDAY_ICONS: Record<HolidayThemeKey, LucideIcon> = {
   foundation: Sunrise,
   hangul: PenLine,
   christmas: TreePine,
+  constitution: Gavel,
 };
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -163,6 +164,7 @@ export function MonthView({
                   const holidayName = holidayMap.get(dateKey(day));
                   const theme = holidayTheme(dateKey(day), holidayName);
                   const ThemeIcon = theme ? HOLIDAY_ICONS[theme.key] : null;
+                  const Decor = theme ? HOLIDAY_DECOR[theme.key] : undefined;
                   const visible = dayEvents.slice(0, MAX_CHIPS);
                   const hidden = dayEvents.length - visible.length;
                   return (
@@ -178,8 +180,8 @@ export function MonthView({
                       } ${isToday ? "today-cell-indicator" : ""} ${cornerClass}`}
                       style={theme ? { backgroundImage: theme.background } : undefined}
                     >
-                      {theme?.key === "christmas" && <ChristmasDecor />}
-                      {ThemeIcon && theme && theme.key !== "christmas" && (
+                      {Decor && <Decor />}
+                      {ThemeIcon && theme && !Decor && (
                         <ThemeIcon
                           aria-hidden
                           className="pointer-events-none absolute bottom-1 right-1 size-[42%] max-h-9 max-w-9 opacity-25"

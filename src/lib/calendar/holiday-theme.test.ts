@@ -14,6 +14,7 @@ describe("holidayTheme", () => {
   it("skips substitute days, non-holidays and minor holidays", () => {
     expect(holidayTheme("2026-08-17", "광복절 (대체공휴일)")).toBeNull();
     expect(holidayTheme("2026-08-15", undefined)).toBeNull();
-    expect(holidayTheme("2026-07-17", "제헌절")).toBeNull();
+    expect(holidayTheme("2026-07-17", "제헌절")?.key).toBe("constitution");
+    expect(holidayTheme("2026-07-18", "어떤 기념일")).toBeNull();
   });
 });
