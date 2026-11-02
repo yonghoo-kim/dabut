@@ -173,3 +173,43 @@ body {
   height: calc(100vh - max(env(safe-area-inset-top), 0.75rem) - env(safe-area-inset-bottom) - 6.5rem);
   height: calc(100dvh - max(env(safe-area-inset-top), 0.75rem) - env(safe-area-inset-bottom) - 6.5rem);
 }
+
+/* 성탄절 달력 칸 (ChristmasDecor) */
+.xmas-snow {
+  position: absolute;
+  top: -6px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 2px rgba(80, 100, 130, 0.45);
+  opacity: 0.95;
+  animation-name: xmas-fall, xmas-sway;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: normal, alternate;
+}
+@keyframes xmas-fall {
+  from { top: -6px; }
+  to { top: 105%; }
+}
+@keyframes xmas-sway {
+  from { transform: translateX(-3px); }
+  to { transform: translateX(3px); }
+}
+.xmas-light {
+  animation: xmas-twinkle 1.6s ease-in-out infinite;
+}
+@keyframes xmas-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.xmas-star {
+  transform-origin: 20px 5px;
+  animation: xmas-star 2.4s ease-in-out infinite;
+}
+@keyframes xmas-star {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xmas-snow, .xmas-light, .xmas-star { animation: none; }
+}
