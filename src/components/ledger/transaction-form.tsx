@@ -119,27 +119,36 @@ export function TransactionForm({
     () => (memoFocused ? suggestMemos(memo, memoHistory, type) : []),
     [memo, memoFocused, memoHistory, type]
   );
+  // 자동 지정 직전 상태 (메모를 지우거나 더 이상 비슷한 기록이 없으면 이 상태로 되돌린다).
+  const autoPrevRef = useRef<{ category: string | undefined; payment: string | null } | null>(null);
+  function applyAuto(categoryId: string, name: string) {
+    if (!autoPrevRef.current) autoPrevRef.current = { category: selectedByType[type], payment: paymentMethodId };
+    selectCategory(categoryId);
+    setSuggestedName(name);
+  }
+  function revertAuto() {
+    const prev = autoPrevRef.current;
+    if (prev) {
+      setSelectedByType((current) => ({ ...current, [type]: prev.category }));
+      setPaymentMethodId(prev.payment);
+      autoPrevRef.current = null;
+    }
+    setSuggestedName(null);
+  }
   function onMemoChange(value: string) {
     setMemo(value);
     if (manualPickRef.current) return;
     const id = suggestCategory(value, memoHistory, type);
     const match = id ? filteredCategories.find((c) => c.id === id) : undefined;
-    if (match) {
-      selectCategory(match.id);
-      setSuggestedName(match.name);
-    } else {
-      setSuggestedName(null);
-    }
+    if (match) applyAuto(match.id, match.name);
+    else revertAuto();
   }
   function pickMemoSuggestion(value: string, categoryId: string) {
     setMemo(value);
     setMemoFocused(false);
+    if (manualPickRef.current) return;
     const match = filteredCategories.find((c) => c.id === categoryId);
-    if (match) {
-      manualPickRef.current = true;
-      selectCategory(match.id);
-      setSuggestedName(match.name);
-    }
+    if (match) applyAuto(match.id, match.name);
   }
 
   const [deletePending, startDelete] = useTransition();
@@ -327,6 +336,7 @@ export function TransactionForm({
         selectedId={selectedCategoryId}
         onSelect={(id) => {
           manualPickRef.current = true;
+          autoPrevRef.current = null;
           setSuggestedName(null);
           selectCategory(id);
         }}
