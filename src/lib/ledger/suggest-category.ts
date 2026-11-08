@@ -45,3 +45,33 @@ export function suggestCategory(
   }
   return winner?.categoryId ?? null;
 }
+
+export type MemoSuggestion = { memo: string; categoryId: string; count: number };
+
+/**
+ * 메모 자동완성 후보: 지금까지 입력한 메모 중 타이핑한 글자를 포함하는 것 (같은 유형만).
+ * 앞부분이 일치하는 것 먼저, 그다음 많이 쓴 순, 최근 순. 이미 똑같이 입력한 메모는 제외.
+ */
+export function suggestMemos(
+  typed: string,
+  history: readonly MemoHistoryItem[],
+  type: string,
+  limit = 6
+): MemoSuggestion[] {
+  const query = normalize(typed.trim());
+  if (!query) return [];
+  const byMemo = new Map<string, MemoSuggestion & { firstIndex: number; prefix: boolean }>();
+  history.forEach((item, index) => {
+    if (item.type !== type || !item.memo) return;
+    const memo = item.memo.trim();
+    const norm = normalize(memo);
+    if (!norm.includes(query) || norm === query) return;
+    const existing = byMemo.get(norm);
+    if (existing) existing.count += 1;
+    else byMemo.set(norm, { memo, categoryId: item.categoryId, count: 1, firstIndex: index, prefix: norm.startsWith(query) });
+  });
+  return [...byMemo.values()]
+    .sort((a, b) => Number(b.prefix) - Number(a.prefix) || b.count - a.count || a.firstIndex - b.firstIndex)
+    .slice(0, limit)
+    .map(({ memo, categoryId, count }) => ({ memo, categoryId, count }));
+}

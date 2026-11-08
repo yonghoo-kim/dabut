@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { suggestCategory } from "./suggest-category";
+import { suggestCategory, suggestMemos } from "./suggest-category";
 
 const h = [
   { memo: "스타벅스 아메리카노", categoryId: "cafe", type: "expense" },
@@ -28,5 +28,22 @@ describe("suggestCategory", () => {
       { memo: "커피 원두 구매", categoryId: "mart", type: "expense" },
     ];
     expect(suggestCategory("커피", hist, "expense")).toBe("cafe");
+  });
+});
+
+describe("suggestMemos", () => {
+  const hist = [
+    { memo: "플로 커피", categoryId: "cafe", type: "expense" },
+    { memo: "플로", categoryId: "cafe", type: "expense" },
+    { memo: "플로", categoryId: "cafe", type: "expense" },
+    { memo: "애플 구독", categoryId: "sub", type: "expense" },
+    { memo: "플라워", categoryId: "gift", type: "income" },
+  ];
+  it("lists matching memos, prefix first then frequency, same type only", () => {
+    expect(suggestMemos("플", hist, "expense").map((s) => s.memo)).toEqual(["플로", "플로 커피", "애플 구독"]);
+  });
+  it("excludes an exact match and empty input", () => {
+    expect(suggestMemos("플로", hist, "expense").map((s) => s.memo)).toEqual(["플로 커피"]);
+    expect(suggestMemos("  ", hist, "expense")).toEqual([]);
   });
 });

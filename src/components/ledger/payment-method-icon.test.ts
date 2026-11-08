@@ -14,6 +14,8 @@ describe("detectPaymentBrand", () => {
     ["서울페이", "seoulpay"],
     ["서울 페이", "seoulpay"],
     ["Seoul Pay", "seoulpay"],
+    ["대한항공 030", "hyundai"],
+    ["현대카드", "hyundai"],
   ])("%s -> %s", (name, key) => {
     expect(detectPaymentBrand(name)).toBe(key);
   });

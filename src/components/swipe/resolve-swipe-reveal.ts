@@ -12,9 +12,14 @@ export const POSITION_THRESHOLD_RATIO = 0.62;
  * revealed) or closed. `offsetX` is the total drag offset for this gesture
  * (negative = left), `wasOpen` the state before the gesture began.
  */
-export function resolveSwipeReveal(offsetX: number, velocityX: number, wasOpen: boolean): boolean {
+export function resolveSwipeReveal(
+  offsetX: number,
+  velocityX: number,
+  wasOpen: boolean,
+  width: number = REVEAL_WIDTH
+): boolean {
   if (velocityX < -VELOCITY_THRESHOLD) return true;
   if (velocityX > VELOCITY_THRESHOLD) return false;
-  const position = (wasOpen ? -REVEAL_WIDTH : 0) + offsetX;
-  return position < -REVEAL_WIDTH * POSITION_THRESHOLD_RATIO;
+  const position = (wasOpen ? -width : 0) + offsetX;
+  return position < -width * POSITION_THRESHOLD_RATIO;
 }

@@ -23,11 +23,16 @@ export function PaymentMethodPicker({
   name,
   methods,
   defaultValue,
+  value,
+  onChange,
   currentUserId,
 }: {
   name: string;
   methods: PickerPaymentMethod[];
   defaultValue?: string | null;
+  /** 제어 모드: 부모가 선택값을 정한다 (예: 카테고리에 따라 결제수단 자동 선택). */
+  value?: string | null;
+  onChange?: (id: string | null) => void;
   /**
    * When provided (together with each method's `ownerId`), chips for a
    * payment method registered by someone else (a connected partner's shared
@@ -38,7 +43,14 @@ export function PaymentMethodPicker({
   currentUserId?: string | null;
 }) {
   const t = useTranslations("ledger");
-  const [selected, setSelected] = useState<string | null>(defaultValue ?? null);
+  const [inner, setInner] = useState<string | null>(defaultValue ?? null);
+  const controlled = value !== undefined;
+  const selected = controlled ? value : inner;
+  const setSelected = (updater: (prev: string | null) => string | null) => {
+    const next = updater(selected);
+    if (controlled) onChange?.(next);
+    else setInner(next);
+  };
 
   // Nothing to pick from yet (the user hasn't added any payment methods in
   // Settings) — don't show an empty, useless field.

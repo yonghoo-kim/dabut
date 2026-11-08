@@ -291,7 +291,8 @@
   },
   "common": {
     "loading": "加载中…",
-    "delete": "删除"
+    "delete": "删除",
+    "edit": "编辑"
   },
   "toast": {
     "eventCreated": "日程已保存",

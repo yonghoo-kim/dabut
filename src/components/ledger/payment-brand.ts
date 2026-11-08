@@ -4,6 +4,8 @@ export const PAYMENT_BRANDS = [
   { key: "kb", match: /국민|\bkb\b|kookmin/i, label: "국민카드", color: "#FFD600", fg: "#1a1a1a" },
   { key: "bc", match: /\bbc\b|비씨/i, label: "BC카드", color: "#E30613", fg: "#ffffff" },
   { key: "clt", match: /clt|복지|cyberlogitec|사이버로지텍/i, label: "CLT 복지카드", color: "#000000", fg: "#ffffff" },
+  // 현대카드(예: 대한항공 030) — 현대카드 아이덴티티: 블랙 바탕 + 레드 포인트.
+  { key: "hyundai", match: /현대|hyundai|대한항공|\b030\b/i, label: "현대카드", color: "#000000", fg: "#DA0011" },
   { key: "seoulpay", match: /서울\s*페이|seoul\s*pay/i, label: "서울페이", color: "#00B5E2", fg: "#ffffff" },
 ] as const;
 

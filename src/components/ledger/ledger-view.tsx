@@ -446,8 +446,21 @@ export function LedgerView({
         <div className="mt-5 flex flex-col gap-5">
           {groups.map(({ date, items }) => (
             <section key={date}>
-              <h2 className="mb-2 px-1 text-xs font-semibold text-ink-muted">
-                {dateGroupLabel(date, todayKey, locale, (key) => tDates(key))}
+              <h2 className="mb-2 flex items-center justify-between gap-2 px-1 text-xs font-semibold text-ink-muted">
+                <span>{dateGroupLabel(date, todayKey, locale, (key) => tDates(key))}</span>
+                {/* 그날 수입/지출 요약 */}
+                <span className="flex shrink-0 items-center gap-2 tabular-nums">
+                  {(() => {
+                    const income = items.filter((r) => r.type === "income").reduce((sum, r) => sum + r.amount, 0);
+                    const expense = items.filter((r) => r.type === "expense").reduce((sum, r) => sum + r.amount, 0);
+                    return (
+                      <>
+                        {income > 0 && <span className="text-income">+{formatWon(income)}</span>}
+                        {expense > 0 && <span className="text-expense">-{formatWon(expense)}</span>}
+                      </>
+                    );
+                  })()}
+                </span>
               </h2>
               <ul className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
                 {items.map((row) => {
@@ -461,15 +474,25 @@ export function LedgerView({
                       }`}
                     >
                       <SwipeToDelete
-                        disabled={row.ownerId !== currentUserId}
+                        canDelete={row.ownerId === currentUserId}
                         deleteLabel={tCommon("delete")}
                         onDelete={() => remove(row.id)}
+                        editHref={`/ledger/${row.id}/edit`}
+                        editLabel={tCommon("edit")}
                         contentClassName="bg-surface"
                       >
-                        <Link
-                          href={`/ledger/${row.id}/edit`}
+                        {/* 탭하면 이 카테고리로 필터 (다시 탭하면 해제). 수정은 왼쪽으로 밀어서. */}
+                        <button
+                          type="button"
                           draggable={false}
-                          className="flex items-center gap-3 px-4 py-3 transition hover:bg-surface-2 active:bg-surface-2"
+                          aria-pressed={categoryIds.length === 1 && categoryIds[0] === row.categoryId}
+                          onClick={() => {
+                            setCategoryIds((prev) =>
+                              prev.length === 1 && prev[0] === row.categoryId ? [] : [row.categoryId]
+                            );
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-2 active:bg-surface-2"
                         >
                           <span
                             className={`grid size-10 shrink-0 place-items-center rounded-full ${
@@ -490,7 +513,7 @@ export function LedgerView({
                             {isIncome ? "+" : "-"}
                             {formatWon(row.amount)}
                           </span>
-                        </Link>
+                        </button>
                       </SwipeToDelete>
                     </li>
                   );

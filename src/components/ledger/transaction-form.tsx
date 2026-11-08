@@ -1,6 +1,7 @@
 "use client";
 
-import { suggestCategory, type MemoHistoryItem } from "@/lib/ledger/suggest-category";
+import { CategoryIcon } from "@/components/ledger/category-icon";
+import { suggestCategory, suggestMemos, type MemoHistoryItem } from "@/lib/ledger/suggest-category";
 import { cancelCelebration, startCelebration } from "@/components/feedback/celebrate-bus";
 import { useRouter } from "@/i18n/navigation";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -91,18 +92,53 @@ export function TransactionForm({
   const selectedCategoryId =
     filteredCategories.find((category) => category.id === selectedByType[type])?.id ?? filteredCategories[0]?.id;
 
+  // 결제수단 (카테고리 규칙으로 자동 선택하기 위해 제어 상태로 둔다).
+  const [paymentMethodId, setPaymentMethodId] = useState<string | null>(transaction?.payment_method_id ?? null);
+
+  // 카테고리별 결제수단 규칙: 로켓프레시 -> 쿠팡(국민) 카드.
+  function applyCategoryRules(categoryId: string) {
+    const category = allCategories.find((c) => c.id === categoryId);
+    if (!category || !/로켓\s*프레시/.test(category.name)) return;
+    const coupang =
+      paymentMethods.find((m) => /쿠팡/.test(m.name) && /국민|kb/i.test(m.name)) ??
+      paymentMethods.find((m) => /쿠팡/.test(m.name));
+    if (coupang) setPaymentMethodId(coupang.id);
+  }
+
+  function selectCategory(categoryId: string) {
+    setSelectedByType((prev) => ({ ...prev, [type]: categoryId }));
+    applyCategoryRules(categoryId);
+  }
+
   // 메모를 입력하면 과거 기록과 비슷한 내용을 찾아 카테고리를 자동 지정 (직접 고른 뒤에는 건드리지 않음).
   const manualPickRef = useRef(mode === "edit");
   const [suggestedName, setSuggestedName] = useState<string | null>(null);
+  const [memo, setMemo] = useState(transaction?.memo ?? "");
+  const [memoFocused, setMemoFocused] = useState(false);
+  const memoSuggestions = useMemo(
+    () => (memoFocused ? suggestMemos(memo, memoHistory, type) : []),
+    [memo, memoFocused, memoHistory, type]
+  );
   function onMemoChange(value: string) {
+    setMemo(value);
     if (manualPickRef.current) return;
     const id = suggestCategory(value, memoHistory, type);
     const match = id ? filteredCategories.find((c) => c.id === id) : undefined;
     if (match) {
-      setSelectedByType((prev) => ({ ...prev, [type]: match.id }));
+      selectCategory(match.id);
       setSuggestedName(match.name);
     } else {
       setSuggestedName(null);
+    }
+  }
+  function pickMemoSuggestion(value: string, categoryId: string) {
+    setMemo(value);
+    setMemoFocused(false);
+    const match = filteredCategories.find((c) => c.id === categoryId);
+    if (match) {
+      manualPickRef.current = true;
+      selectCategory(match.id);
+      setSuggestedName(match.name);
     }
   }
 
@@ -237,20 +273,54 @@ export function TransactionForm({
         </div>
       </Card>
 
-      <label className={labelClass}>
-        {t("memo")}
+      <div className={`${labelClass} relative`}>
+        <label htmlFor="tx-memo">{t("memo")}</label>
         <input
+          id="tx-memo"
           type="text"
           name="memo"
-          defaultValue={transaction?.memo ?? ""}
+          value={memo}
           onChange={(event) => onMemoChange(event.target.value)}
+          onFocus={() => setMemoFocused(true)}
+          onBlur={() => setMemoFocused(false)}
           autoComplete="off"
+          role="combobox"
+          aria-expanded={memoSuggestions.length > 0}
+          aria-controls="tx-memo-suggestions"
           className={inputClass}
         />
+        {memoSuggestions.length > 0 && (
+          <ul
+            id="tx-memo-suggestions"
+            role="listbox"
+            className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-line bg-surface shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+          >
+            {memoSuggestions.map((item) => {
+              const category = allCategories.find((c) => c.id === item.categoryId);
+              return (
+                <li key={item.memo} role="option" aria-selected={false}>
+                  <button
+                    type="button"
+                    // blur 보다 먼저 선택되도록 mousedown 에서 처리
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      pickMemoSuggestion(item.memo, item.categoryId);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface-2"
+                  >
+                    {category && <CategoryIcon category={category} className="size-4 shrink-0 text-ink-muted" />}
+                    <span className="min-w-0 flex-1 truncate font-medium text-ink">{item.memo}</span>
+                    {category && <span className="shrink-0 text-xs text-ink-muted">{category.name}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {suggestedName && (
           <span className="text-xs font-medium text-brand">{t("memoSuggested", { category: suggestedName })}</span>
         )}
-      </label>
+      </div>
 
       <CategoryPicker
         type={type}
@@ -260,11 +330,17 @@ export function TransactionForm({
         onSelect={(id) => {
           manualPickRef.current = true;
           setSuggestedName(null);
-          setSelectedByType((prev) => ({ ...prev, [type]: id }));
+          selectCategory(id);
         }}
         onCreated={(category) => {
           setCreatedCategories((prev) => [...prev, category]);
           setSelectedByType((prev) => ({ ...prev, [category.type]: category.id }));
+          if (/로켓\s*프레시/.test(category.name)) {
+            const coupang =
+              paymentMethods.find((m) => /쿠팡/.test(m.name) && /국민|kb/i.test(m.name)) ??
+              paymentMethods.find((m) => /쿠팡/.test(m.name));
+            if (coupang) setPaymentMethodId(coupang.id);
+          }
         }}
       />
 
@@ -272,7 +348,8 @@ export function TransactionForm({
         <PaymentMethodPicker
           name="paymentMethodId"
           methods={paymentMethods}
-          defaultValue={transaction?.payment_method_id ?? null}
+          value={paymentMethodId}
+          onChange={setPaymentMethodId}
           currentUserId={currentUserId}
         />
       )}

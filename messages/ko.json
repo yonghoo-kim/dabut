@@ -291,7 +291,8 @@
   },
   "common": {
     "loading": "불러오는 중…",
-    "delete": "삭제"
+    "delete": "삭제",
+    "edit": "수정"
   },
   "toast": {
     "eventCreated": "일정을 저장했어요",

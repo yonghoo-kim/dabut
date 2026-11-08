@@ -291,7 +291,8 @@
   },
   "common": {
     "loading": "Loading…",
-    "delete": "Delete"
+    "delete": "Delete",
+    "edit": "Edit"
   },
   "toast": {
     "eventCreated": "Event saved",
