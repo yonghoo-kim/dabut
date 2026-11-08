@@ -34,6 +34,7 @@ const chipClass =
 export function CategoryPicker({
   type,
   allowCreate = true,
+  hint,
   categories,
   selectedId,
   onSelect,
@@ -41,6 +42,8 @@ export function CategoryPicker({
 }: {
   type: "expense" | "income";
   allowCreate?: boolean;
+  /** 카테고리 제목 옆에 작게 보여줄 안내 (예: 비슷한 기록으로 자동 지정). */
+  hint?: string | null;
   categories: PickerCategory[];
   selectedId: string | undefined;
   onSelect: (id: string) => void;
@@ -163,7 +166,10 @@ export function CategoryPicker({
 
   return (
     <fieldset ref={fieldsetRef} className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium text-ink-muted">{t("category")}</legend>
+      <legend className="mb-2 flex items-baseline gap-2 text-sm font-medium text-ink-muted">
+        {t("category")}
+        {hint && <span className="text-[11px] font-semibold text-brand">{hint}</span>}
+      </legend>
       <div className="flex flex-wrap gap-2">
         {visibleCategories.map((category) => (
           <label key={category.id} className="cursor-pointer">

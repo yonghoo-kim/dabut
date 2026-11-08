@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
 
 /**
  * Collapsed-by-default wrapper for a search/filter UI block (search input +
@@ -16,11 +16,16 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react";
 export function FilterDisclosure({
   label,
   activeCount,
+  onReset,
+  resetLabel,
   children,
 }: {
   label: string;
   /** Number of non-default filters/search currently active; 0 hides the badge. */
   activeCount: number;
+  /** 있으면 필터가 걸려 있을 때 토글 옆에 초기화 버튼을 보여준다. */
+  onReset?: () => void;
+  resetLabel?: string;
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -28,6 +33,7 @@ export function FilterDisclosure({
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
       <button
         type="button"
         aria-expanded={expanded}
@@ -50,6 +56,18 @@ export function FilterDisclosure({
         )}
         <ChevronDown aria-hidden className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
+      {onReset && activeCount > 0 && (
+        <button
+          type="button"
+          onClick={onReset}
+          aria-label={resetLabel}
+          title={resetLabel}
+          className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-surface text-ink-muted transition hover:bg-surface-2 hover:text-ink active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <RotateCcw aria-hidden className="size-4" />
+        </button>
+      )}
+      </div>
       {expanded && <div className="flex flex-col gap-2">{children}</div>}
     </div>
   );

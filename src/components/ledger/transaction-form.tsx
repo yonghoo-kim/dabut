@@ -317,14 +317,12 @@ export function TransactionForm({
             })}
           </ul>
         )}
-        {suggestedName && (
-          <span className="text-xs font-medium text-brand">{t("memoSuggested", { category: suggestedName })}</span>
-        )}
       </div>
 
       <CategoryPicker
         type={type}
         allowCreate={!isIncome}
+        hint={suggestedName ? t("memoSuggested", { category: suggestedName }) : null}
         categories={filteredCategories}
         selectedId={selectedCategoryId}
         onSelect={(id) => {

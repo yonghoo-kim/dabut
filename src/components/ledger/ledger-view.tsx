@@ -292,7 +292,17 @@ export function LedgerView({
       <PaymentMethodGoalsSheet open={goalsOpen} onClose={() => setGoalsOpen(false)} items={goalItems} />
 
       <div className="mt-4">
-        <FilterDisclosure label={t("filtersLabel")} activeCount={activeFilterCount}>
+        <FilterDisclosure
+          label={t("filtersLabel")}
+          activeCount={activeFilterCount}
+          resetLabel={t("filtersReset")}
+          onReset={() => {
+            setCategoryIds([]);
+            setPaymentMethodIds([]);
+            setOwnerFilter(null);
+            setSearchQuery("");
+          }}
+        >
           <div className="relative">
             <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
             <input

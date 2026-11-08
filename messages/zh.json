@@ -111,7 +111,8 @@
     "goalProgress": "本月目标进度",
     "filterUnassigned": "未指定",
     "addTransaction": "添加记录",
-    "memoSuggested": "已按相似记录自动选择“{category}”"
+    "memoSuggested": "已按相似记录自动选择“{category}”",
+    "filtersReset": "重置筛选"
   },
   "calendar": {
     "monthView": "日历",
@@ -146,7 +147,8 @@
       "christmas": "圣诞",
       "constitution": "制宪节",
       "labor": "劳动节"
-    }
+    },
+    "filtersReset": "重置筛选"
   },
   "events": {
     "title": "标题",

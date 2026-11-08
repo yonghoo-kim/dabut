@@ -111,7 +111,8 @@
     "goalProgress": "이번 달 목표 대비",
     "filterUnassigned": "미지정",
     "addTransaction": "내역 추가",
-    "memoSuggested": "비슷한 기록으로 '{category}' 자동 지정"
+    "memoSuggested": "비슷한 기록으로 '{category}' 자동 지정",
+    "filtersReset": "필터 초기화"
   },
   "calendar": {
     "monthView": "달력",
@@ -146,7 +147,8 @@
       "christmas": "성탄절",
       "constitution": "제헌절",
       "labor": "노동절"
-    }
+    },
+    "filtersReset": "필터 초기화"
   },
   "events": {
     "title": "제목",
