@@ -111,7 +111,7 @@
     "goalProgress": "Progress toward this month's goal",
     "filterUnassigned": "Unassigned",
     "addTransaction": "Add transaction",
-    "memoSuggested": "Auto-picked '{category}' from similar entries",
+    "memoSuggested": "Auto-picked “{category}” from similar entries",
     "filtersReset": "Reset filters"
   },
   "calendar": {

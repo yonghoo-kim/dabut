@@ -114,7 +114,10 @@ export function TransactionForm({
   const manualPickRef = useRef(mode === "edit");
   const [suggestedName, setSuggestedName] = useState<string | null>(null);
   const [memo, setMemo] = useState(transaction?.memo ?? "");
+  // 자동완성 목록 열림 여부: 포커스/입력 시 열리고, 항목 선택·포커스 이탈 시 닫힌다.
+  // (예전엔 항목을 고른 뒤 입력칸에 포커스가 남아 있어도 "포커스 아님"으로 남아 다시 타이핑해도 목록이 안 떴다.)
   const [memoFocused, setMemoFocused] = useState(false);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const memoSuggestions = useMemo(
     () => (memoFocused ? suggestMemos(memo, memoHistory, type) : []),
     [memo, memoFocused, memoHistory, type]
@@ -137,6 +140,7 @@ export function TransactionForm({
   }
   function onMemoChange(value: string) {
     setMemo(value);
+    setMemoFocused(true);
     if (manualPickRef.current) return;
     const id = suggestCategory(value, memoHistory, type);
     const match = id ? filteredCategories.find((c) => c.id === id) : undefined;
@@ -290,8 +294,14 @@ export function TransactionForm({
           name="memo"
           value={memo}
           onChange={(event) => onMemoChange(event.target.value)}
-          onFocus={() => setMemoFocused(true)}
-          onBlur={() => setMemoFocused(false)}
+          onFocus={() => {
+            if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+            setMemoFocused(true);
+          }}
+          // 모바일에서 목록 항목 탭이 blur 보다 늦게 처리되는 경우를 위해 살짝 늦게 닫는다.
+          onBlur={() => {
+            blurTimerRef.current = setTimeout(() => setMemoFocused(false), 150);
+          }}
           autoComplete="off"
           role="combobox"
           aria-expanded={memoSuggestions.length > 0}
@@ -315,6 +325,7 @@ export function TransactionForm({
                       event.preventDefault();
                       pickMemoSuggestion(item.memo, item.categoryId);
                     }}
+                    onClick={() => pickMemoSuggestion(item.memo, item.categoryId)}
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface-2"
                   >
                     {category && <CategoryIcon category={category} className="size-4 shrink-0 text-ink-muted" />}
