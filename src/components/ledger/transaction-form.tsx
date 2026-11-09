@@ -30,7 +30,7 @@ const DELETE_CONFIRM_MS = 3000;
 type TransactionRow = Database["public"]["Tables"]["transactions"]["Row"];
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
-const FIXED_INCOME_CATEGORIES = ["월급", "용돈", "페이백"] as const;
+const FIXED_INCOME_CATEGORIES = ["월급", "상여금", "용돈", "페이백"] as const;
 
 export function TransactionForm({
   mode,
