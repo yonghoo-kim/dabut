@@ -112,7 +112,14 @@
     "filterUnassigned": "未指定",
     "addTransaction": "添加记录",
     "memoSuggested": "已按相似记录自动选择“{category}”",
-    "filtersReset": "重置筛选"
+    "filtersReset": "重置筛选",
+    "categoryDeleteTitle": "删除分类",
+    "categoryDeleteBody": "要删除“{name}”分类吗？",
+    "categoryDeleteConfirm": "删除",
+    "categoryInUse": "已有{count}条记录使用，无法删除",
+    "categoryNotDeletable": "默认分类或对方创建的分类无法删除",
+    "categoryDeleteFailed": "删除失败，请稍后再试",
+    "categoryLongPressHint": "长按删除"
   },
   "calendar": {
     "monthView": "日历",
@@ -148,7 +155,9 @@
       "constitution": "制宪节",
       "labor": "劳动节"
     },
-    "filtersReset": "重置筛选"
+    "filtersReset": "重置筛选",
+    "legendReset": "显示全部",
+    "legendFocusHint": "点击突出显示"
   },
   "events": {
     "title": "标题",
@@ -340,9 +349,9 @@
     "savingsRate": "总储蓄率",
     "savingsRateHint": "收入{income}中储蓄{saved}（支出{expense}）",
     "savingsNoIncome": "这段时间没有收入",
-    "savingsGood": "👍 良好",
-    "savingsWarning": "⚠️ 注意",
-    "savingsCritical": "🚨 赤字",
+    "savingsGood": "良好",
+    "savingsWarning": "注意",
+    "savingsCritical": "赤字",
     "categoryShare": "分类支出占比",
     "categoryShareHint": "占总支出比例 · 从高到低",
     "trend": "收支趋势",

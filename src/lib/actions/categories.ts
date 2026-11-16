@@ -74,3 +74,30 @@ export async function createCategory(input: {
     },
   };
 }
+
+export type DeleteCategoryResult = { ok?: true; error?: "inUse" | "notAllowed" | "failed"; count?: number };
+
+/**
+ * 직접 만든 카테고리 삭제. 기본 카테고리나 다른 사람이 만든 것은 RLS 로 막혀 notAllowed,
+ * 이미 내역에 쓰인 카테고리는 내역이 사라지지 않도록 inUse 로 거절한다.
+ */
+export async function deleteCategory(id: string): Promise<DeleteCategoryResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "notAllowed" };
+
+  const { count } = await supabase
+    .from("transactions")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", id);
+  if (count && count > 0) return { error: "inUse", count };
+
+  const { data, error } = await supabase.from("categories").delete().eq("id", id).select("id");
+  if (error) return { error: error.code === "23503" ? "inUse" : "failed" };
+  if (!data || data.length === 0) return { error: "notAllowed" };
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

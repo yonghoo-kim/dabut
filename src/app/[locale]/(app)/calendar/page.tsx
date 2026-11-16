@@ -10,7 +10,6 @@ import { CalendarMonths } from "@/components/calendar/calendar-months";
 import { MonthNavArrows } from "@/components/calendar/month-nav-arrows";
 import { ThreadView } from "@/components/calendar/thread-view";
 import { TodayButton } from "@/components/calendar/today-button";
-import { CategoryLegend } from "@/components/calendar/category-legend";
 import { getDateFnsLocale, monthTitlePattern, parseMonthParam } from "@/components/calendar/date-locale";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { resolvePartnerName } from "@/lib/calendar/partner-name";
@@ -145,7 +144,6 @@ export default async function CalendarPage({
           timeZone={timeZone}
           holidays={holidayEntries}
           currentMonthKey={format(new Date(), "yyyy-MM")}
-          legend={<CategoryLegend partnerName={partnerName} />}
         />
       </main>
     );

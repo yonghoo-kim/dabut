@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useProgressRouter } from "@/components/feedback/use-progress-router";
 import { MonthView } from "./month-view";
 import { MonthYearPicker } from "./month-year-picker";
 import { monthHref } from "./date-locale";
+import { CategoryLegend } from "./category-legend";
+import type { EventCategory } from "./category-style";
 import type { Database } from "@/types/database.types";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -34,7 +36,6 @@ export function CalendarMonths({
   timeZone,
   holidays,
   currentMonthKey,
-  legend,
 }: {
   months: CalendarMonth[];
   initialIndex: number;
@@ -45,7 +46,6 @@ export function CalendarMonths({
   holidays: [string, string][];
   /** 서버 기준 "이번 달" yyyy-MM (오늘 버튼 표시/이동용). */
   currentMonthKey: string;
-  legend: ReactNode;
 }) {
   const tDates = useTranslations("dates");
   const locale = useLocale();
@@ -57,6 +57,8 @@ export function CalendarMonths({
   const trackRef = useRef<HTMLDivElement>(null);
   const itemWRef = useRef(0);
   const suppressClickRef = useRef(false);
+  // 범례로 고른 종류만 강조 (null = 전체).
+  const [focus, setFocus] = useState<EventCategory | null>(null);
 
   // 스와이프 반응을 즉각적으로: 드래그 중에는 React 렌더 없이 DOM transform 만 직접 바꾼다
   // (예전엔 손가락이 움직일 때마다 13개월 전체가 다시 렌더돼 반박자 늦었다).
@@ -213,11 +215,12 @@ export function CalendarMonths({
                 partnerName={partnerName}
                 timeZone={timeZone}
                 holidays={holidays}
+                focus={focus}
               />
             </div>
           </section>
       )),
-    [months, itemW, eventsByMonth, currentUserId, partnerName, timeZone, holidays]
+    [months, itemW, eventsByMonth, currentUserId, partnerName, timeZone, holidays, focus]
   );
 
   const activeMonth = months[active] ?? months[initialIndex];
@@ -261,7 +264,7 @@ export function CalendarMonths({
           {monthNodes}
         </div>
       </div>
-      {legend}
+      <CategoryLegend partnerName={partnerName} active={focus} onToggle={setFocus} />
     </div>
   );
 }

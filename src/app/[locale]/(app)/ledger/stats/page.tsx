@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, Siren, TriangleAlert } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
@@ -113,14 +113,15 @@ export default async function LedgerStatsPage({
   const peakWeekday = weekday.reduce((max, w) => (w.amount > max.amount ? w : max), weekday[0]);
   const maxTrendValue = Math.max(1, ...trend.flatMap((p) => [p.income, p.expense]));
 
-  const savingsBadge =
-    savings.ratePct == null
-      ? null
-      : savings.ratePct >= 20
-        ? t("savingsGood")
-        : savings.ratePct >= 0
-          ? t("savingsWarning")
-          : t("savingsCritical");
+  const savingsLevel: "good" | "warning" | "critical" | null =
+    savings.ratePct == null ? null : savings.ratePct >= 20 ? "good" : savings.ratePct >= 0 ? "warning" : "critical";
+  const savingsBadge = savingsLevel
+    ? {
+        good: { label: t("savingsGood"), Icon: Check, color: "#22c55e" },
+        warning: { label: t("savingsWarning"), Icon: TriangleAlert, color: "#facc15" },
+        critical: { label: t("savingsCritical"), Icon: Siren, color: "#ffffff" },
+      }[savingsLevel]
+    : null;
 
   const rangeLabel: Record<StatsRange, string> = {
     month: t("periodMonth"),
@@ -163,7 +164,10 @@ export default async function LedgerStatsPage({
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold opacity-90">{t("savingsRate")}</span>
           {savingsBadge && (
-            <span className="rounded-full bg-white/25 px-2.5 py-1 text-[10px] font-extrabold">{savingsBadge}</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 text-[10px] font-extrabold">
+              <savingsBadge.Icon aria-hidden className="size-3.5" strokeWidth={3} style={{ color: savingsBadge.color }} />
+              {savingsBadge.label}
+            </span>
           )}
         </div>
         {savings.income === 0 ? (
@@ -271,7 +275,7 @@ export default async function LedgerStatsPage({
               ))}
             </div>
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-expense/10 px-3 py-2.5">
-              <span aria-hidden>⚠️</span>
+              <TriangleAlert aria-hidden className="mt-px size-4 shrink-0 text-expense" strokeWidth={2.4} />
               <p className="text-xs font-bold text-expense">
                 {t("weekdayPeak", { day: weekdayShort[peakWeekday.weekday] })}
               </p>

@@ -67,10 +67,13 @@ export function TransactionForm({
   // Categories created inline are kept locally so they show up (selected)
   // immediately, without waiting for a server refresh.
   const [createdCategories, setCreatedCategories] = useState<PickerCategory[]>([]);
+  const [deletedCategoryIds, setDeletedCategoryIds] = useState<string[]>([]);
   const allCategories = useMemo(() => {
     const seen = new Set(categories.map((category) => category.id));
-    return [...categories, ...createdCategories.filter((category) => !seen.has(category.id))];
-  }, [categories, createdCategories]);
+    return [...categories, ...createdCategories.filter((category) => !seen.has(category.id))].filter(
+      (category) => !deletedCategoryIds.includes(category.id)
+    );
+  }, [categories, createdCategories, deletedCategoryIds]);
   const filteredCategories =
     type === "income"
       ? FIXED_INCOME_CATEGORIES.map((name) => allCategories.find((c) => c.type === "income" && c.name === name)).filter(
@@ -358,6 +361,7 @@ export function TransactionForm({
           setSuggestedName(null);
           selectCategory(id);
         }}
+        onDeleted={(id) => setDeletedCategoryIds((prev) => [...prev, id])}
         onCreated={(category) => {
           setCreatedCategories((prev) => [...prev, category]);
           setSelectedByType((prev) => ({ ...prev, [category.type]: category.id }));

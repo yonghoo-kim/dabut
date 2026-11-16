@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { deleteAccount } from "@/lib/actions/account";
 import { createClient } from "@/lib/supabase/client";
+import { clearSessionBackup } from "@/lib/auth/session-backup";
 import { useProgressRouter } from "@/components/feedback/use-progress-router";
 import { buttonClass } from "@/components/ui/button";
 import { errorClass, inputClass } from "@/components/ui/field";
@@ -46,6 +47,7 @@ export function DeleteAccount({ compact = false }: { compact?: boolean }) {
         return;
       }
       // The server already removed the user; clear the local session too.
+      clearSessionBackup();
       await createClient().auth.signOut().catch(() => undefined);
       router.replace({ pathname: "/login", query: { toast: "accountDeleted" } });
       router.refresh();

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { clearSessionBackup } from "@/lib/auth/session-backup";
 import { useProgressRouter } from "@/components/feedback/use-progress-router";
 import { doneProgress, startProgress } from "@/components/feedback/progress-store";
 import { Spinner } from "@/components/ui/submit-button";
@@ -17,6 +18,7 @@ export function SignOutButton() {
   async function handleSignOut() {
     setPending(true);
     startProgress();
+    clearSessionBackup();
     await createClient()
       .auth.signOut()
       .finally(() => doneProgress());

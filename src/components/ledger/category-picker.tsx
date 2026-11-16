@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
-import { createCategory } from "@/lib/actions/categories";
+import { createCategory, deleteCategory } from "@/lib/actions/categories";
 import { Spinner } from "@/components/ui/submit-button";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass, errorClass } from "@/components/ui/field";
@@ -39,6 +39,7 @@ export function CategoryPicker({
   selectedId,
   onSelect,
   onCreated,
+  onDeleted,
 }: {
   type: "expense" | "income";
   allowCreate?: boolean;
@@ -48,6 +49,8 @@ export function CategoryPicker({
   selectedId: string | undefined;
   onSelect: (id: string) => void;
   onCreated: (category: PickerCategory) => void;
+  /** 길게 눌러 삭제에 성공한 카테고리 id. */
+  onDeleted?: (id: string) => void;
 }) {
   const t = useTranslations("ledger");
   const [open, setOpen] = useState(false);
@@ -61,6 +64,77 @@ export function CategoryPicker({
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
   const titleId = useId();
+  const deleteTitleId = useId();
+
+  // 길게 눌러 삭제: 0.55초 누르면 확인창. 누르는 동안 움직이면 취소.
+  const [confirmTarget, setConfirmTarget] = useState<PickerCategory | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletePending, startDelete] = useTransition();
+  const confirmRef = useRef<HTMLDialogElement>(null);
+  const pressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
+  const longPressedRef = useRef(false);
+
+  function startPress(category: PickerCategory, event: React.PointerEvent) {
+    if (!onDeleted) return;
+    longPressedRef.current = false;
+    const timer = setTimeout(() => {
+      longPressedRef.current = true;
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(15);
+      setDeleteError(null);
+      setConfirmTarget(category);
+    }, 550);
+    pressRef.current = { timer, x: event.clientX, y: event.clientY };
+  }
+  function movePress(event: React.PointerEvent) {
+    const press = pressRef.current;
+    if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) cancelPress();
+  }
+  function cancelPress() {
+    if (pressRef.current) clearTimeout(pressRef.current.timer);
+    pressRef.current = null;
+  }
+
+  useEffect(() => {
+    const dialog = confirmRef.current;
+    if (!dialog) return;
+    if (confirmTarget && !dialog.open) {
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.open = true;
+    }
+    if (!confirmTarget && dialog.open) {
+      if (typeof dialog.close === "function") dialog.close();
+      else dialog.open = false;
+    }
+  }, [confirmTarget]);
+
+  function confirmDelete() {
+    const target = confirmTarget;
+    if (!target || deletePending) return;
+    startDelete(async () => {
+      const result = await deleteCategory(target.id);
+      if (result.ok) {
+        onDeleted?.(target.id);
+        setConfirmTarget(null);
+      } else if (result.error === "inUse") {
+        setDeleteError(t("categoryInUse", { count: result.count ?? 0 }));
+      } else if (result.error === "notAllowed") {
+        setDeleteError(t("categoryNotDeletable"));
+      } else {
+        setDeleteError(t("categoryDeleteFailed"));
+      }
+    });
+  }
+
+  // 모달이 열려 있는 동안 뒤 화면이 스크롤/스와이프되지 않게 잠근다.
+  const anyModalOpen = open || confirmTarget !== null;
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [anyModalOpen]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -172,7 +246,25 @@ export function CategoryPicker({
       </legend>
       <div className="flex flex-wrap gap-2">
         {visibleCategories.map((category) => (
-          <label key={category.id} className="cursor-pointer">
+          <label
+            key={category.id}
+            className="cursor-pointer select-none [-webkit-touch-callout:none]"
+            title={onDeleted ? t("categoryLongPressHint") : undefined}
+            onPointerDown={(event) => startPress(category, event)}
+            onPointerMove={movePress}
+            onPointerUp={cancelPress}
+            onPointerLeave={cancelPress}
+            onPointerCancel={cancelPress}
+            onContextMenu={(event) => onDeleted && event.preventDefault()}
+            onClickCapture={(event) => {
+              // 길게 눌러 확인창을 연 경우엔 선택으로 처리하지 않는다.
+              if (longPressedRef.current) {
+                event.preventDefault();
+                event.stopPropagation();
+                longPressedRef.current = false;
+              }
+            }}
+          >
             <input
               type="radio"
               name="categoryId"
@@ -221,6 +313,9 @@ export function CategoryPicker({
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
+        // 모달 위에서의 스와이프가 뒤의 탭 전환/화면으로 전달되지 않게.
+        onPointerDownCapture={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
         onCancel={(event) => {
           event.preventDefault();
           closeModal();
@@ -296,6 +391,57 @@ export function CategoryPicker({
             >
               {pending && <Spinner />}
               {t("addCategorySubmit")}
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog
+        ref={confirmRef}
+        aria-labelledby={deleteTitleId}
+        onPointerDownCapture={(event) => event.stopPropagation()}
+        onCancel={(event) => {
+          event.preventDefault();
+          if (!deletePending) setConfirmTarget(null);
+        }}
+        onClick={(event) => {
+          if (event.target === confirmRef.current && !deletePending) setConfirmTarget(null);
+        }}
+        className="m-auto w-[min(88vw,22rem)] rounded-[var(--radius-card)] border border-line bg-surface p-0 text-ink shadow-xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      >
+        <div className="flex flex-col gap-3 p-5">
+          <h2 id={deleteTitleId} className="text-base font-bold text-ink">
+            {t("categoryDeleteTitle")}
+          </h2>
+          {confirmTarget && (
+            <p className="flex items-center gap-2 text-sm text-ink">
+              <CategoryIcon category={confirmTarget} className="size-4 shrink-0" />
+              {t("categoryDeleteBody", { name: confirmTarget.name })}
+            </p>
+          )}
+          {deleteError && (
+            <p role="alert" className={errorClass}>
+              {deleteError}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmTarget(null)}
+              disabled={deletePending}
+              className={buttonClass("ghost", "flex-1")}
+            >
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={deletePending}
+              aria-busy={deletePending}
+              className={buttonClass("danger", "flex-1")}
+            >
+              {deletePending && <Spinner />}
+              {t("categoryDeleteConfirm")}
             </button>
           </div>
         </div>

@@ -1,10 +1,6 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ACTIVITY_COOKIE = "dabut_last_active";
-const INACTIVITY_MS = 3 * 24 * 60 * 60 * 1000;
-const ACTIVITY_REFRESH_MS = 60 * 60 * 1000;
-
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -34,27 +30,8 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const now = Date.now();
-    const last = Number(request.cookies.get(ACTIVITY_COOKIE)?.value);
-    if (Number.isFinite(last) && last > 0 && now - last > INACTIVITY_MS) {
-      // 3일 이상 활동 없음 -> 로그아웃 (signOut이 sb-* 쿠키를 지움)
-      await supabase.auth.signOut();
-      response.cookies.delete(ACTIVITY_COOKIE);
-    } else if (!Number.isFinite(last) || last <= 0 || now - last > ACTIVITY_REFRESH_MS) {
-      response.cookies.set(ACTIVITY_COOKIE, String(now), {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * 400,
-      });
-    }
-  }
+  // 요청마다 세션을 확인/갱신만 한다. (예전의 "3일 비활동 시 자동 로그아웃"은 제거: 한 번 로그인하면 유지)
+  await supabase.auth.getUser();
 
   return response;
 }

@@ -9,6 +9,7 @@ import { doneProgress, startProgress } from "@/components/feedback/progress-stor
 import { Spinner } from "@/components/ui/submit-button";
 import { TooltipInput } from "@/components/ui/tooltip-input";
 import { authFieldWrap, authLabelClass, authInputClass, authButtonClass, authErrorClass } from "@/components/auth/auth-field";
+import { restoreSessionFromBackup } from "@/lib/auth/session-backup";
 import { clearRememberedEmail, getRememberedEmail, setRememberedEmail } from "@/lib/auth/remembered-email";
 
 export default function LoginPage() {
@@ -19,6 +20,25 @@ export default function LoginPage() {
   const [rememberEmail, setRememberEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  // 쿠키가 지워졌어도 이 기기에 백업된 로그인이 있으면 바로 복구해서 들어간다.
+  const [restoring, setRestoring] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    restoreSessionFromBackup(createClient())
+      .then((ok) => {
+        if (cancelled) return;
+        if (ok) {
+          router.replace("/ledger");
+          router.refresh();
+        } else setRestoring(false);
+      })
+      .catch(() => !cancelled && setRestoring(false));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pre-fill from a previously remembered email, if any.
   useEffect(() => {
@@ -48,6 +68,14 @@ export default function LoginPage() {
       return;
     }
     router.push("/ledger");
+  }
+
+  if (restoring) {
+    return (
+      <div className="grid min-h-[50vh] place-items-center text-brand">
+        <Spinner />
+      </div>
+    );
   }
 
   return (

@@ -55,6 +55,7 @@ export function MonthView({
   timeZone,
   holidays,
   fill = false,
+  focus = null,
 }: {
   month: Date;
   events: CategorizedEvent[];
@@ -71,6 +72,8 @@ export function MonthView({
   holidays?: [string, string][];
   /** 부모 높이에 맞춰 한 달이 한 화면에 다 보이도록 행 높이를 균등 분배한다 (3개월 스크롤러용). */
   fill?: boolean;
+  /** 범례에서 고른 종류만 진하게, 나머지는 희미하게. */
+  focus?: "mine" | "partner" | "shared" | null;
 }) {
   const t = useTranslations("calendar");
   const tSummary = useTranslations("daySummary");
@@ -100,6 +103,8 @@ export function MonthView({
   // existing chip rendering unchanged.
   const multiDayEvents = events.filter((event) => isMultiDayEvent(event, timeZone));
   // 하루 칸 안의 일정은 등록순이 아니라 그날의 시간순 (종일 일정 먼저).
+  const dimClass = (category: string) =>
+    focus && category !== focus ? "opacity-20 saturate-50" : focus ? "font-bold" : "";
   const singleDayEvents = events
     .filter((event) => !isMultiDayEvent(event, timeZone))
     .sort((a, b) => Number(b.all_day) - Number(a.all_day) || a.start_at.localeCompare(b.start_at));
@@ -151,7 +156,7 @@ export function MonthView({
                       }}
                       className={`flex min-w-0 items-center truncate px-1.5 text-[10px] font-medium leading-[1.1rem] ${
                         CHIP_CLASSNAME[item.event.category]
-                      } ${item.isEventStart ? "rounded-l-md" : ""} ${item.isEventEnd ? "rounded-r-md" : ""}`}
+                      } ${dimClass(item.event.category)} ${item.isEventStart ? "rounded-l-md" : ""} ${item.isEventEnd ? "rounded-r-md" : ""}`}
                     >
                       {item.isEventStart ? item.event.title : ""}
                     </span>
@@ -216,7 +221,7 @@ export function MonthView({
                         {visible.map((event) => (
                           <li key={event.id} className="min-w-0" title={t(CATEGORY_KEY[event.category])}>
                             <span
-                              className={`flex min-w-0 items-start gap-0.5 rounded-md px-1 py-px text-[10px] font-medium leading-tight ${CHIP_CLASSNAME[event.category]}`}
+                              className={`flex min-w-0 items-start gap-0.5 rounded-md px-1 py-px text-[10px] font-medium leading-tight ${CHIP_CLASSNAME[event.category]} ${dimClass(event.category)}`}
                             >
                               {event.category === "partner" && (
                                 <span aria-hidden className={`mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full ${DOT_CLASSNAME.partner}`} />

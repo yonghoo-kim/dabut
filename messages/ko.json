@@ -112,7 +112,14 @@
     "filterUnassigned": "미지정",
     "addTransaction": "내역 추가",
     "memoSuggested": "비슷한 기록으로 “{category}” 자동 지정",
-    "filtersReset": "필터 초기화"
+    "filtersReset": "필터 초기화",
+    "categoryDeleteTitle": "카테고리 삭제",
+    "categoryDeleteBody": "“{name}” 카테고리를 삭제할까요?",
+    "categoryDeleteConfirm": "삭제",
+    "categoryInUse": "이미 {count}건의 내역에 쓰인 카테고리라 삭제할 수 없어요",
+    "categoryNotDeletable": "기본 카테고리나 상대방이 만든 카테고리는 삭제할 수 없어요",
+    "categoryDeleteFailed": "삭제하지 못했어요. 잠시 후 다시 시도해 주세요",
+    "categoryLongPressHint": "길게 눌러 삭제"
   },
   "calendar": {
     "monthView": "달력",
@@ -148,7 +155,9 @@
       "constitution": "제헌절",
       "labor": "노동절"
     },
-    "filtersReset": "필터 초기화"
+    "filtersReset": "필터 초기화",
+    "legendReset": "전체 보기",
+    "legendFocusHint": "눌러서 그 사람 일정만 강조"
   },
   "events": {
     "title": "제목",
@@ -340,9 +349,9 @@
     "savingsRate": "총 저축률",
     "savingsRateHint": "수입 {income} 중 {saved} 저축 (지출 {expense})",
     "savingsNoIncome": "이 기간엔 수입이 없어요",
-    "savingsGood": "👍 양호",
-    "savingsWarning": "⚠️ 주의",
-    "savingsCritical": "🚨 적자",
+    "savingsGood": "양호",
+    "savingsWarning": "주의",
+    "savingsCritical": "적자",
     "categoryShare": "항목별 지출 비중",
     "categoryShareHint": "전체 지출 중 카테고리 비율 · 높은 순",
     "trend": "기간별 수입/지출 추이",
