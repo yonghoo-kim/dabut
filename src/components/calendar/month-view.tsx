@@ -99,7 +99,10 @@ export function MonthView({
   // repeated in every day cell they touch; same-day events keep the
   // existing chip rendering unchanged.
   const multiDayEvents = events.filter((event) => isMultiDayEvent(event, timeZone));
-  const singleDayEvents = events.filter((event) => !isMultiDayEvent(event, timeZone));
+  // 하루 칸 안의 일정은 등록순이 아니라 그날의 시간순 (종일 일정 먼저).
+  const singleDayEvents = events
+    .filter((event) => !isMultiDayEvent(event, timeZone))
+    .sort((a, b) => Number(b.all_day) - Number(a.all_day) || a.start_at.localeCompare(b.start_at));
 
   const lanesByWeek = weeks.map((_, weekIndex) => {
     const segments: EventSegment[] = multiDayEvents.flatMap((event) =>

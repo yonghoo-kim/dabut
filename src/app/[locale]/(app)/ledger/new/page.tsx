@@ -18,12 +18,17 @@ export default async function NewTransactionPage() {
     supabase.from("payment_methods").select("id, name, icon, owner_id").order("created_at", { ascending: true }),
     supabase
       .from("transactions")
-      .select("memo, category_id, type")
+      .select("memo, category_id, type, payment_method_id")
       .not("memo", "is", null)
       .order("occurred_at", { ascending: false })
       .limit(500),
   ]);
-  const memoHistory = (history ?? []).map((row) => ({ memo: row.memo, categoryId: row.category_id, type: row.type }));
+  const memoHistory = (history ?? []).map((row) => ({
+    memo: row.memo,
+    categoryId: row.category_id,
+    type: row.type,
+    paymentMethodId: row.payment_method_id,
+  }));
 
   return (
     <TransactionForm

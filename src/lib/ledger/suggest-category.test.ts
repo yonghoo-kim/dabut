@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { suggestCategory, suggestMemos } from "./suggest-category";
+import { suggestCategory, suggestMemos, suggestPaymentMethod } from "./suggest-category";
 
 const h = [
   { memo: "스타벅스 아메리카노", categoryId: "cafe", type: "expense" },
@@ -45,5 +45,22 @@ describe("suggestMemos", () => {
   it("excludes an exact match and empty input", () => {
     expect(suggestMemos("플로", hist, "expense").map((s) => s.memo)).toEqual(["플로 커피"]);
     expect(suggestMemos("  ", hist, "expense")).toEqual([]);
+  });
+});
+
+describe("suggestPaymentMethod", () => {
+  const hist = [
+    { memo: "스타벅스", categoryId: "cafe", type: "expense", paymentMethodId: "samsung" },
+    { memo: "스타벅스 라떼", categoryId: "cafe", type: "expense", paymentMethodId: "samsung" },
+    { memo: "스타벅스", categoryId: "cafe", type: "expense", paymentMethodId: "kb" },
+    { memo: "스타벅스", categoryId: "cafe", type: "expense", paymentMethodId: null },
+    { memo: "스타벅스", categoryId: "eat", type: "expense", paymentMethodId: "bc" },
+  ];
+  it("picks the card most used for similar memos in that category", () => {
+    expect(suggestPaymentMethod("스타벅스", hist, "expense", "cafe")).toBe("samsung");
+  });
+  it("is scoped to the category and returns null when unknown", () => {
+    expect(suggestPaymentMethod("스타벅스", hist, "expense", "eat")).toBe("bc");
+    expect(suggestPaymentMethod("택시", hist, "expense", "cafe")).toBeNull();
   });
 });

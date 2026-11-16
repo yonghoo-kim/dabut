@@ -1,7 +1,7 @@
 "use client";
 
 import { CategoryIcon } from "@/components/ledger/category-icon";
-import { suggestCategory, suggestMemos, type MemoHistoryItem } from "@/lib/ledger/suggest-category";
+import { suggestCategory, suggestMemos, suggestPaymentMethod, type MemoHistoryItem } from "@/lib/ledger/suggest-category";
 import { cancelCelebration, startCelebration } from "@/components/feedback/celebrate-bus";
 import { useRouter } from "@/i18n/navigation";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -124,8 +124,15 @@ export function TransactionForm({
   );
   // 자동 지정 직전 상태 (메모를 지우거나 더 이상 비슷한 기록이 없으면 이 상태로 되돌린다).
   const autoPrevRef = useRef<{ category: string | undefined; payment: string | null } | null>(null);
-  function applyAuto(categoryId: string, name: string) {
+  function applyAuto(categoryId: string, name: string, memoText: string) {
     if (!autoPrevRef.current) autoPrevRef.current = { category: selectedByType[type], payment: paymentMethodId };
+    // 같은 항목은 대개 같은 카드로 쓰므로, 비슷한 기록에서 가장 많이 쓴 결제수단도 함께 지정.
+    if (type === "expense") {
+      const paymentId = suggestPaymentMethod(memoText, memoHistory, type, categoryId);
+      if (paymentId && paymentMethods.some((m) => m.id === paymentId)) setPaymentMethodId(paymentId);
+      else setPaymentMethodId(autoPrevRef.current.payment);
+    }
+    // 카테고리 규칙(예: 로켓프레시 → 쿠팡카드)은 기록보다 우선하도록 뒤에 적용.
     selectCategory(categoryId);
     setSuggestedName(name);
   }
@@ -144,7 +151,7 @@ export function TransactionForm({
     if (manualPickRef.current) return;
     const id = suggestCategory(value, memoHistory, type);
     const match = id ? filteredCategories.find((c) => c.id === id) : undefined;
-    if (match) applyAuto(match.id, match.name);
+    if (match) applyAuto(match.id, match.name, value);
     else revertAuto();
   }
   function pickMemoSuggestion(value: string, categoryId: string) {
@@ -152,7 +159,7 @@ export function TransactionForm({
     setMemoFocused(false);
     if (manualPickRef.current) return;
     const match = filteredCategories.find((c) => c.id === categoryId);
-    if (match) applyAuto(match.id, match.name);
+    if (match) applyAuto(match.id, match.name, value);
   }
 
   const [deletePending, startDelete] = useTransition();

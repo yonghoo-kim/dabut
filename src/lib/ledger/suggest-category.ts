@@ -1,4 +1,4 @@
-export type MemoHistoryItem = { memo: string | null; categoryId: string; type: string };
+export type MemoHistoryItem = { memo: string | null; categoryId: string; type: string; paymentMethodId?: string | null };
 
 function normalize(text: string): string {
   return text.toLowerCase().replace(/\s+/g, "");
@@ -74,4 +74,43 @@ export function suggestMemos(
     .sort((a, b) => Number(b.prefix) - Number(a.prefix) || b.count - a.count || a.firstIndex - b.firstIndex)
     .slice(0, limit)
     .map(({ memo, categoryId, count }) => ({ memo, categoryId, count }));
+}
+
+/**
+ * 비슷한 메모(완전 일치 > 부분 포함)로 같은 카테고리를 쓴 기록들 중 가장 많이 쓴 결제수단.
+ * 같은 항목은 대개 같은 카드로 결제하므로 카테고리와 함께 자동 지정한다. 없으면 null.
+ */
+export function suggestPaymentMethod(
+  memo: string,
+  history: readonly MemoHistoryItem[],
+  type: string,
+  categoryId: string
+): string | null {
+  const typed = normalize(memo.trim());
+  if (typed.length < 2) return null;
+  const tally = new Map<string, { score: number; count: number; firstIndex: number }>();
+  history.forEach((item, index) => {
+    if (item.type !== type || item.categoryId !== categoryId || !item.memo || !item.paymentMethodId) return;
+    const past = normalize(item.memo);
+    if (past.length < 2) return;
+    const score = past === typed ? 3 : past.includes(typed) || typed.includes(past) ? 2 : 0;
+    if (!score) return;
+    const entry = tally.get(item.paymentMethodId);
+    if (!entry) tally.set(item.paymentMethodId, { score, count: 1, firstIndex: index });
+    else {
+      entry.score = Math.max(entry.score, score);
+      entry.count += 1;
+    }
+  });
+  let best: { id: string; score: number; count: number; firstIndex: number } | null = null;
+  for (const [id, e] of tally) {
+    if (
+      !best ||
+      e.score > best.score ||
+      (e.score === best.score && (e.count > best.count || (e.count === best.count && e.firstIndex < best.firstIndex)))
+    ) {
+      best = { id, ...e };
+    }
+  }
+  return best?.id ?? null;
 }
