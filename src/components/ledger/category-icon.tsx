@@ -255,6 +255,7 @@ const NAME_ICON: Record<string, string> = {
   공과금: "receipt",
   편의점: "store",
   카페: "coffee",
+  "카페&베이커리": "coffee",
   구독: "user-round-group",
   주유: "fuel",
   통신비: "smartphone",
